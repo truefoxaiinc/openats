@@ -119,7 +119,7 @@ function SolutionsSection() {
       <div className={styles.container}>
         <SectionIntro eyebrow="Made for every side of hiring" title="One platform. Different perspectives." text="Whether you build teams, recruit for clients or explore your next role, OpenATS is designed around the people in the process." centered />
         <div className={styles.solutionGrid} id="candidate-experience">
-          {solutions.map(({ icon: Icon, label, title, text, items, action, href, tone, disabled }) => (
+          {solutions.map(({ icon: Icon, label, title, text, items, action, href, tone }) => (
             <article className={styles.solutionCard} key={label}>
               <span className={styles.solutionIcon}><Icon size={21} /></span>
               <span className={styles.solutionLabel}>{label}</span>
