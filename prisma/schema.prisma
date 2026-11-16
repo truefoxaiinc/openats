@@ -1390,7 +1390,6 @@ model CandidateAccount {
   contactLinks           CandidateContactLink[]
   resumes                CandidateResume[]
   profile                CandidateProfile?
-  resumeParseJobs        CandidateResumeParseJob[]
 
   @@index([emailVerifiedAt])
 }
