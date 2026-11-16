@@ -155,13 +155,15 @@ export async function confirmApplicationClaim(rawToken: string, candidateAccount
       select: { id: true },
     });
     if (contacts.length) {
-      await tx.candidateContactLink.createMany({
+      const created = await tx.candidateContactLink.createMany({
         data: contacts.map((contact) => ({ candidateAccountId, contactId: contact.id })),
         skipDuplicates: true,
       });
+      await tx.candidateApplicationClaimToken.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
+      return created.count;
     }
     await tx.candidateApplicationClaimToken.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
-    return contacts.length;
+    return 0;
   });
 }
 
