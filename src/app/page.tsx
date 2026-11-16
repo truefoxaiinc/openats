@@ -1,10 +1,18 @@
-import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { MarketingPage } from '@/components/marketing/marketing-page';
 
-/**
- * With a marketing site (MARKETING_ORIGIN, next.config.ts), `/` is its
- * homepage and this page never runs. Without one, a self-hosted install
- * opens on sign-in; signed-in visitors never get here (lib/auth.config.ts).
- */
+export const metadata: Metadata = {
+  title: 'OpenATS — Recruitment, simplified. Talent, discovered.',
+  description:
+    'Manage jobs, candidates and hiring workflows in one thoughtful recruitment platform. Built for employers, recruitment agencies and candidates.',
+  openGraph: {
+    title: 'OpenATS — Recruitment, simplified. Talent, discovered.',
+    description:
+      'One platform for job postings, candidate management and collaborative hiring workflows.',
+    type: 'website',
+  },
+};
+
 export default function Page() {
-  redirect('/login');
+  return <MarketingPage />;
 }
