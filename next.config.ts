@@ -38,16 +38,12 @@ const OCR_FILES = [
   'node_modules/pdfjs-dist/wasm/{jbig2,openjpeg,qcms_bg}.wasm',
 ];
 
-// The marketing site (homepage, /agencies, /self-hosted, /talent-network, and
-// /extension, which redirects there) is its own app in a
-// private repo, served at this same address: Next.js multi-zones. These
-// rewrites hand it those paths and its assets (it builds with assetPrefix
-// '/site-assets'). They run before this app's own pages, so its `/` wins over
-// app/page.tsx. Without MARKETING_ORIGIN (a self-hosted install), `/` is the
-// sign-in page and the marketing paths don't exist. Links between the zones
+// The public homepage now lives in this app. The remaining marketing
+// destinations are still served by the separate marketing zone when
+// MARKETING_ORIGIN is configured; its assets use the /site-assets prefix. Links between the zones
 // are plain <a>s: a client-side navigation can't cross into the other app.
 const MARKETING_ORIGIN = process.env.MARKETING_ORIGIN?.replace(/\/+$/, '');
-const MARKETING_PATHS = ['/', '/agencies', '/self-hosted', '/talent-network', '/extension', '/site-assets/:path*'];
+const MARKETING_PATHS = ['/agencies', '/self-hosted', '/talent-network', '/extension', '/site-assets/:path*'];
 
 const nextConfig: NextConfig = {
   // Keep the Docker self-host path honest (see docs/03-architecture.md).
