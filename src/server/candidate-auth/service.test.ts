@@ -18,6 +18,26 @@ afterEach(async () => {
   createdEmails.length = 0;
 });
 
+describe('candidate registration consent validation', () => {
+  it('requires explicit Terms of Use acceptance', async () => {
+    const result = await registerCandidate({
+      name: 'Test Candidate', email: 'terms-required@example.test',
+      password: 'correct horse battery staple',
+      termsAccepted: false, privacyPolicyAccepted: true,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('requires explicit Privacy Policy acceptance', async () => {
+    const result = await registerCandidate({
+      name: 'Test Candidate', email: 'privacy-required@example.test',
+      password: 'correct horse battery staple',
+      termsAccepted: true, privacyPolicyAccepted: false,
+    });
+    expect(result.ok).toBe(false);
+  });
+});
+
 describe.skipIf(!databaseAvailable)('candidate registration persistence', () => {
   it('persists E.164 phone, country code and server-stamped policy versions', async () => {
     const email = `candidate-${randomUUID()}@example.test`;
