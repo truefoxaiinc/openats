@@ -4,7 +4,7 @@ Candidate resumes are stored in candidate-owned tables and a dedicated private s
 
 ## Database
 
-The additive migration creates `CandidateResume`, `CandidateProfile`, profile child records (education, experience, skills, projects, certifications, languages), and `CandidateResumeParseJob`. Every row is UUID-keyed and timestamped. Candidate ownership cascades from `CandidateAccount`; profile children cascade from `CandidateProfile`. Parse jobs use a composite foreign key to ensure their resume belongs to the same candidate account. A PostgreSQL partial unique index permits at most one primary resume per candidate.
+The additive migration creates `CandidateResume`, `CandidateProfile`, profile child records (education, experience, skills, projects, certifications, languages), and `CandidateResumeParseJob`. Every row is UUID-keyed and timestamped. Candidate profile children cascade from `CandidateProfile`. Resume rows use `ON DELETE RESTRICT` from `CandidateAccount` so deleting an account cannot orphan private object bytes; the account-deletion workflow must first call the storage deletion service for every resume. Parse jobs use a composite foreign key to ensure their resume belongs to the same candidate account and cascade with that resume. A PostgreSQL partial unique index permits at most one primary resume per candidate.
 
 ## Storage
 
