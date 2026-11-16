@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-type Mode = 'login' | 'signup' | 'forgot' | 'reset' | 'verify' | 'claim';
+type Mode = 'login' | 'signup' | 'forgot' | 'reset' | 'verify' | 'claim' | 'resend';
 
 const config: Record<Mode, { title: string; description: string; endpoint: string; submit: string }> = {
   login: { title: 'Welcome back', description: 'Sign in to your candidate account.', endpoint: '/api/candidate-auth/login', submit: 'Sign in' },
@@ -14,6 +14,7 @@ const config: Record<Mode, { title: string; description: string; endpoint: strin
   reset: { title: 'Choose a new password', description: 'Use at least 12 characters for your new password.', endpoint: '/api/candidate-auth/reset-password', submit: 'Update password' },
   verify: { title: 'Verify your email', description: 'Confirm the email address used to create your candidate account.', endpoint: '/api/candidate-auth/verify-email', submit: 'Verify email' },
   claim: { title: 'Connect your application history', description: 'Confirm the request sent to your verified email address.', endpoint: '/api/candidate-auth/claim-applications/confirm', submit: 'Confirm and connect' },
+  resend: { title: 'Resend verification email', description: 'Enter the email address used to register. If it is still unverified, we will send a fresh link.', endpoint: '/api/candidate-auth/resend-verification', submit: 'Resend verification' },
 };
 
 export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mode: Mode; token?: string; errorMessage?: string }) {
@@ -34,7 +35,7 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
     const payload: Record<string, string> = {};
     if (mode === 'signup') Object.assign(payload, { name, email, password });
     if (mode === 'login') Object.assign(payload, { email, password });
-    if (mode === 'forgot') Object.assign(payload, { email });
+    if (mode === 'forgot' || mode === 'resend') Object.assign(payload, { email });
     if (mode === 'reset') Object.assign(payload, { token, password });
     if (mode === 'verify' || mode === 'claim') Object.assign(payload, { token });
     try {
@@ -75,7 +76,7 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
             <input autoComplete="name" required minLength={2} maxLength={120} value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
           </label>
         ) : null}
-        {mode === 'login' || mode === 'signup' || mode === 'forgot' ? (
+        {mode === 'login' || mode === 'signup' || mode === 'forgot' || mode === 'resend' ? (
           <label className="block text-sm text-ink-2">Email address
             <input type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
           </label>
@@ -91,7 +92,7 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
         <>
           <div className="my-5 flex items-center gap-3 text-xs text-ink-3"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
           <a href="/api/candidate-auth/google/start" className="flex h-11 w-full items-center justify-center rounded-full border border-line text-sm font-medium text-ink hover:bg-muted">Continue with Google</a>
-          <div className="mt-5 flex justify-between text-sm"><Link className="text-ink-2 underline underline-offset-4" href="/candidate/forgot-password">Forgot password?</Link><Link className="font-medium text-ink underline underline-offset-4" href="/candidate/signup">Create account</Link></div>
+          <div className="mt-5 flex justify-between text-sm"><span className="flex gap-3"><Link className="text-ink-2 underline underline-offset-4" href="/candidate/forgot-password">Forgot password?</Link><Link className="text-ink-2 underline underline-offset-4" href="/candidate/resend-verification">Resend verification</Link></span><Link className="font-medium text-ink underline underline-offset-4" href="/candidate/signup">Create account</Link></div>
         </>
       ) : null}
       {mode === 'signup' ? <p className="mt-5 text-center text-sm text-ink-2">Already registered? <Link className="font-medium text-ink underline underline-offset-4" href="/candidate/login">Sign in</Link></p> : null}
