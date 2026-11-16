@@ -29,6 +29,7 @@ export function Navbar() {
         </div>
 
         <div className={styles.navActions}>
+          <Link href="/candidate/login" className={styles.loginLink}>Candidate sign in</Link>
           <Link href="/login" className={styles.loginLink}>Log in</Link>
           <Link href="/signup" className={styles.navCta}>Get started <ArrowUpRight size={15} /></Link>
         </div>
@@ -51,6 +52,7 @@ export function Navbar() {
             <a key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</a>
           ))}
           <div className={styles.mobileActions}>
+            <Link href="/candidate/login" onClick={() => setOpen(false)}>Candidate sign in</Link>
             <Link href="/login" onClick={() => setOpen(false)}>Log in</Link>
             <Link href="/signup" className={styles.navCta} onClick={() => setOpen(false)}>Get started <ArrowUpRight size={15} /></Link>
           </div>
