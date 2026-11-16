@@ -1461,3 +1461,17 @@ model CandidateContactLink {
   @@unique([candidateAccountId, contactId])
   @@index([candidateAccountId, createdAt])
 }
+
+
+model CandidateAuthRateLimit {
+  id              String   @id @default(uuid())
+  keyHash         String
+  action          String
+  windowStartedAt DateTime @default(now())
+  attempts        Int      @default(0)
+  blockedUntil    DateTime?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([keyHash, action])
+  @@index([blockedUntil])
+}
