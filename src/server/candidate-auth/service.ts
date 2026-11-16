@@ -60,19 +60,43 @@ export async function loginCandidate(input: { email: unknown; password: unknown 
 
 export async function verifyCandidateEmail(rawToken: string) {
   if (!rawToken || rawToken.length > 256) return false;
-  const tokenHash = hashOpaqueToken(rawToken);
+  const record = await db.candidateEmailVerificationToken.findFirst({
+    where: { tokenHash: hashOpaqueToken(rawToken), consumedAt: null, expiresAt: { gt: new Date() } },
+  });
+  if (!record) return false;
   return db.$transaction(async (tx) => {
-    const record = await tx.candidateEmailVerificationToken.findFirst({
-      where: { tokenHash, consumedAt: null, expiresAt: { gt: new Date() } },
+    const now = new Date();
+    const claimed = await tx.candidateEmailVerificationToken.updateMany({
+      where: { id: record.id, consumedAt: null, expiresAt: { gt: now } },
+      data: { consumedAt: now },
     });
-    if (!record) return false;
-    await tx.candidateEmailVerificationToken.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
+    if (claimed.count !== 1) return false;
     await tx.candidateAccount.update({
       where: { id: record.candidateAccountId },
-      data: { emailVerifiedAt: new Date() },
+      data: { emailVerifiedAt: now },
     });
     return true;
   });
+}
+
+export async function resendCandidateVerification(rawEmail: unknown) {
+  const email = normalizeCandidateEmail(rawEmail);
+  if (!validCandidateEmail(email)) return;
+  const account = await db.candidateAccount.findUnique({ where: { email } });
+  if (!account || account.emailVerifiedAt || !account.passwordHash) return;
+  const rawToken = createOpaqueToken();
+  await db.candidateEmailVerificationToken.create({
+    data: {
+      candidateAccountId: account.id,
+      tokenHash: hashOpaqueToken(rawToken),
+      expiresAt: tokenExpiry('CANDIDATE_EMAIL_VERIFICATION_TTL_MINUTES', 30),
+    },
+  });
+  await sendCandidateEmail(
+    email,
+    'Verify your OpenATS candidate account',
+    `Hi ${account.name},\n\nVerify your email address to activate your OpenATS candidate account:\n\n${await actionUrl('/candidate/verify-email', rawToken)}\n\nThis link expires in 30 minutes.`,
+  );
 }
 
 export async function requestCandidatePasswordReset(rawEmail: unknown) {
@@ -104,14 +128,19 @@ export async function resetCandidatePassword(rawToken: string, rawPassword: unkn
       where: { tokenHash, consumedAt: null, expiresAt: { gt: new Date() } },
     });
     if (!record) return false;
+    const now = new Date();
+    const claimed = await tx.candidatePasswordResetToken.updateMany({
+      where: { id: record.id, consumedAt: null, expiresAt: { gt: now } },
+      data: { consumedAt: now },
+    });
+    if (claimed.count !== 1) return false;
     await tx.candidateAccount.update({
       where: { id: record.candidateAccountId },
       data: { passwordHash },
     });
-    await tx.candidatePasswordResetToken.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
     await tx.candidateSession.updateMany({
       where: { candidateAccountId: record.candidateAccountId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data: { revokedAt: now },
     });
     return true;
   });
