@@ -22,6 +22,10 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phoneE164, setPhoneE164] = useState('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(errorMessage);
   const [busy, setBusy] = useState(false);
@@ -32,8 +36,8 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
     setBusy(true);
     setError('');
     setMessage('');
-    const payload: Record<string, string> = {};
-    if (mode === 'signup') Object.assign(payload, { name, email, password });
+    const payload: Record<string, unknown> = {};
+    if (mode === 'signup') Object.assign(payload, { name, email, password, phoneE164, phoneCountryCode, termsAccepted, privacyPolicyAccepted });
     if (mode === 'login') Object.assign(payload, { email, password });
     if (mode === 'forgot' || mode === 'resend') Object.assign(payload, { email });
     if (mode === 'reset') Object.assign(payload, { token, password });
@@ -80,6 +84,24 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
           <label className="block text-sm text-ink-2">Email address
             <input type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
           </label>
+        ) : null}
+        {mode === 'signup' ? (
+          <>
+            <label className="block text-sm text-ink-2">Country calling code (optional)
+              <input type="tel" inputMode="tel" placeholder="+91" value={phoneCountryCode} onChange={(e) => setPhoneCountryCode(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
+            </label>
+            <label className="block text-sm text-ink-2">Phone number in international format (optional)
+              <input type="tel" inputMode="tel" autoComplete="tel" placeholder="+919876543210" value={phoneE164} onChange={(e) => setPhoneE164(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
+            </label>
+            <label className="flex items-start gap-2 text-sm text-ink-2">
+              <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-1" />
+              <span>I accept the <Link href="/terms" className="underline underline-offset-4">Terms of Use</Link>.</span>
+            </label>
+            <label className="flex items-start gap-2 text-sm text-ink-2">
+              <input type="checkbox" required checked={privacyPolicyAccepted} onChange={(e) => setPrivacyPolicyAccepted(e.target.checked)} className="mt-1" />
+              <span>I acknowledge the <Link href="/privacy" className="underline underline-offset-4">Privacy Policy</Link>.</span>
+            </label>
+          </>
         ) : null}
         {mode === 'login' || mode === 'signup' || mode === 'reset' ? (
           <label className="block text-sm text-ink-2">{mode === 'reset' ? 'New password' : 'Password'}
