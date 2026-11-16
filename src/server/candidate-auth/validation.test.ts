@@ -16,6 +16,7 @@ describe('candidate authentication validation', () => {
     expect(validCandidatePassword('correct horse battery')).toBe(true);
     expect(validCandidatePassword('short')).toBe(false);
     expect(validCandidatePassword('a'.repeat(129))).toBe(false);
+    expect(validCandidatePassword('é'.repeat(40))).toBe(false);
   });
 
   it('rejects missing and cross-origin mutation requests', async () => {
