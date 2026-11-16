@@ -102,7 +102,8 @@ export async function storeCandidateResume(input: { candidateAccountId: string; 
   try {
     return await db.$transaction(async tx => {
       if (input.isPrimary) await tx.candidateResume.updateMany({ where: { candidateAccountId: input.candidateAccountId, isPrimary: true }, data: { isPrimary: false } });
-      return tx.candidateResume.create({ data: { candidateAccountId: input.candidateAccountId, storageKey, originalFilename, mimeType: metadata.mimeType, sizeBytes: input.data.byteLength, sha256: metadata.sha256, isPrimary: Boolean(input.isPrimary) } });
+      const saved = await tx.candidateResume.create({ data: { candidateAccountId: input.candidateAccountId, storageKey, originalFilename, mimeType: metadata.mimeType, sizeBytes: input.data.byteLength, sha256: metadata.sha256, isPrimary: Boolean(input.isPrimary) } });
+      return { id: saved.id, originalFilename: saved.originalFilename, mimeType: saved.mimeType, sizeBytes: saved.sizeBytes, sha256: saved.sha256, isPrimary: saved.isPrimary, createdAt: saved.createdAt };
     });
   } catch (error) {
     await remove(storageKey).catch(() => undefined);
@@ -118,12 +119,12 @@ export async function openCandidateResume(candidateAccountId: string, resumeId: 
     const response = await client(cfg).fetch(objectUrl(cfg, key));
     if (response.status === 404) throw new CandidateResumeMissingError('Candidate resume not found.');
     if (!response.ok || !response.body) throw new Error('Private candidate storage is temporarily unavailable.');
-    return { body: response.body, resume };
+    return { body: response.body, resume: { id: resume.id, originalFilename: resume.originalFilename, mimeType: resume.mimeType, sizeBytes: resume.sizeBytes } };
   }
   const target = path.resolve(LOCAL_ROOT, key);
   if (!target.startsWith(LOCAL_ROOT + path.sep)) throw new Error('Invalid candidate storage path.');
   await access(target).catch(() => { throw new CandidateResumeMissingError('Candidate resume not found.'); });
-  return { body: Readable.toWeb(createReadStream(target)) as ReadableStream<Uint8Array>, resume };
+  return { body: Readable.toWeb(createReadStream(target)) as ReadableStream<Uint8Array>, resume: { id: resume.id, originalFilename: resume.originalFilename, mimeType: resume.mimeType, sizeBytes: resume.sizeBytes } };
 }
 export async function deleteCandidateResume(candidateAccountId: string, resumeId: string): Promise<void> {
   const resume = await db.candidateResume.findFirst({ where: { id: resumeId, candidateAccountId }, select: { id: true, storageKey: true } });
