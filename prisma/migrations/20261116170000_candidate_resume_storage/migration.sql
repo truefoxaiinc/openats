@@ -96,7 +96,5 @@ ALTER TABLE "CandidateCertification" ADD CONSTRAINT "CandidateCertification_cand
  FOREIGN KEY ("candidateProfileId") REFERENCES "CandidateProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CandidateLanguage" ADD CONSTRAINT "CandidateLanguage_candidateProfileId_fkey"
  FOREIGN KEY ("candidateProfileId") REFERENCES "CandidateProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "CandidateResumeParseJob" ADD CONSTRAINT "CandidateResumeParseJob_candidateAccountId_fkey"
- FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CandidateResumeParseJob" ADD CONSTRAINT "CandidateResumeParseJob_candidateResumeId_candidateAccountId_fkey"
  FOREIGN KEY ("candidateResumeId", "candidateAccountId") REFERENCES "CandidateResume"("id", "candidateAccountId") ON DELETE CASCADE ON UPDATE CASCADE;
