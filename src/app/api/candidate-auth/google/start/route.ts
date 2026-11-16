@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { allowCandidateAuthAttempt } from '@/server/candidate-auth/rate-limit';
 import { NextResponse } from 'next/server';
 import { requestOrigin } from '@/server/request-origin';
 
@@ -7,7 +8,8 @@ const cookieOptions = (secure: boolean) => ({
   sameSite: 'lax' as const, path: '/', maxAge: 600,
 });
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!(await allowCandidateAuthAttempt(request, 'google-start', 'oauth', 15))) return new NextResponse('Too many attempts. Try again later.', { status: 429 });
   const clientId = process.env.AUTH_GOOGLE_ID;
   if (!clientId || !process.env.AUTH_GOOGLE_SECRET) {
     return NextResponse.redirect(new URL('/candidate/login?error=google-unavailable', (await requestOrigin()).origin ?? 'http://localhost:3000'));
