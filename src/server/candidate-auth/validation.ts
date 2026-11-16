@@ -7,7 +7,7 @@ export function validCandidateEmail(email: string): boolean {
 }
 
 export function validCandidatePassword(password: unknown): password is string {
-  return typeof password === 'string' && password.length >= 12 && password.length <= 128;
+  return typeof password === 'string' && password.length >= 12 && password.length <= 128 && Buffer.byteLength(password, 'utf8') <= 72;
 }
 
 export function candidateName(value: unknown): string {
