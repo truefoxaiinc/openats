@@ -81,7 +81,7 @@ CREATE INDEX "CandidateResumeParseJob_candidateAccountId_createdAt_idx" ON "Cand
 CREATE INDEX "CandidateResumeParseJob_candidateResumeId_createdAt_idx" ON "CandidateResumeParseJob"("candidateResumeId", "createdAt");
 
 ALTER TABLE "CandidateResume" ADD CONSTRAINT "CandidateResume_candidateAccountId_fkey"
- FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "CandidateProfile" ADD CONSTRAINT "CandidateProfile_candidateAccountId_fkey"
  FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CandidateEducation" ADD CONSTRAINT "CandidateEducation_candidateProfileId_fkey"
