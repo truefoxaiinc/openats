@@ -193,6 +193,7 @@ model Contact {
   updatedAt      DateTime  @updatedAt
 
   opportunities Opportunity[]
+  candidateLinks CandidateContactLink[]
   consents      ConsentRecord[]
   pools         TalentPool[]  @relation("PoolMembers")
   referrals     Referral[]
