@@ -92,9 +92,9 @@ export default async function CandidateDashboardPage() {
           <div className="mt-4 rounded-card border border-dashed border-line bg-surface px-6 py-8">
             <h3 className="text-sm font-medium text-ink">No connected applications yet</h3>
             <p className="mt-2 max-w-xl text-sm leading-6 text-ink-2">Your public job applications remain separate from your candidate account. You can explicitly connect application records associated with this verified email address.</p>
-            <CandidateClaimButton />
           </div>
         )}
+        <CandidateClaimButton />
       </section>
       <p className="mt-8 text-xs leading-5 text-ink-3">Application details are shown only after you explicitly verify and connect the matching email address. Internal recruiter notes and confidential applications are not displayed.</p>
     </div>
