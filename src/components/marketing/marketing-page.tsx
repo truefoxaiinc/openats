@@ -57,7 +57,7 @@ function SectionIntro({ eyebrow, title, text, centered = false }: { eyebrow: str
 function TrustSection() {
   return (
     <section className={styles.trustSection} aria-label="Built for modern hiring teams">
-      <p>ONE WORKSPACE. EVERY HIRING RELATIONSHIP.</p>
+      <p>One workspace. Every hiring relationship.</p>
       <div className={styles.trustMarks}>
         <span><Building2 size={17} /> EMPLOYERS</span>
         <span><Globe2 size={17} /> AGENCIES</span>
@@ -277,7 +277,7 @@ export function MarketingPage() {
             <DashboardPreview />
           </div>
         </div>
-        <div className={styles.heroBottom}><span>01 / RECRUITMENT WORKSPACE</span><span>BUILT AROUND PEOPLE, NOT PAPERWORK <ArrowRight size={13} /></span></div>
+        <div className={styles.heroBottom}><span>01 / Recruitment workspace</span><span>Built around people, not paperwork <ArrowRight size={13} /></span></div>
       </section>
       <div className={styles.container}><TrustSection /></div>
       <FeaturesSection />
