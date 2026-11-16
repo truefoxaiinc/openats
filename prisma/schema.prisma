@@ -1498,7 +1498,7 @@ enum CandidateResumeParseJobStatus {
 model CandidateResume {
   id String @id @default(uuid())
   candidateAccountId String
-  candidateAccount CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  candidateAccount CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Restrict)
   storageKey String @unique
   originalFilename String
   mimeType String
