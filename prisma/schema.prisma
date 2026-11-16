@@ -193,6 +193,7 @@ model Contact {
   updatedAt      DateTime  @updatedAt
 
   opportunities Opportunity[]
+  candidateLink CandidateContactLink?
   consents      ConsentRecord[]
   pools         TalentPool[]  @relation("PoolMembers")
   referrals     Referral[]
@@ -1361,3 +1362,116 @@ model CaseStudy {
   @@index([orgId])
 }
 
+
+
+// ---------- Independent candidate identity (Phase 1A) ----------
+// Candidate accounts are deliberately separate from recruiter User records.
+// Contact/application access is granted only through an explicit verified claim.
+model CandidateAccount {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  oauthIdentities        CandidateOAuthIdentity[]
+  sessions               CandidateSession[]
+  emailVerificationTokens CandidateEmailVerificationToken[]
+  passwordResetTokens    CandidatePasswordResetToken[]
+  applicationClaimTokens CandidateApplicationClaimToken[]
+  contactLinks           CandidateContactLink[]
+
+  @@index([emailVerifiedAt])
+}
+
+model CandidateOAuthIdentity {
+  id                String @id @default(uuid())
+  candidateAccountId String
+  candidateAccount  CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  emailAtProvider   String
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([candidateAccountId])
+}
+
+model CandidateSession {
+  id                 String   @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  tokenHash          String   @unique
+  expiresAt          DateTime
+  lastSeenAt         DateTime @default(now())
+  revokedAt          DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([candidateAccountId, expiresAt])
+  @@index([expiresAt])
+}
+
+model CandidateEmailVerificationToken {
+  id                 String   @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  tokenHash          String   @unique
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([candidateAccountId, expiresAt])
+}
+
+model CandidatePasswordResetToken {
+  id                 String   @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  tokenHash          String   @unique
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([candidateAccountId, expiresAt])
+}
+
+model CandidateApplicationClaimToken {
+  id                 String   @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  email              String
+  tokenHash          String   @unique
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([candidateAccountId, expiresAt])
+}
+
+model CandidateContactLink {
+  id                 String   @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
+  contactId          String   @unique
+  contact            Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+
+  @@unique([candidateAccountId, contactId])
+  @@index([candidateAccountId, createdAt])
+}
+
+
+model CandidateAuthRateLimit {
+  id              String   @id @default(uuid())
+  keyHash         String
+  action          String
+  windowStartedAt DateTime @default(now())
+  attempts        Int      @default(0)
+  blockedUntil    DateTime?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([keyHash, action])
+  @@index([blockedUntil])
+}

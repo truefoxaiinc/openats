@@ -39,7 +39,7 @@ const faqs = [
   { q: 'What is OpenATS?', a: 'OpenATS is an applicant tracking and recruitment platform for organizing job postings, candidate records, applications, hiring stages and interview workflows in one workspace.' },
   { q: 'Who can use OpenATS?', a: 'OpenATS is designed for employers, internal talent teams, recruitment agencies and candidates engaging with published opportunities.' },
   { q: 'Can agencies manage multiple clients?', a: 'OpenATS supports agency-oriented recruitment workflows, including organizing roles and candidates across client relationships. Available capabilities depend on your workspace configuration.' },
-  { q: 'Can candidates apply for jobs?', a: 'Organizations can publish career opportunities and receive applications. Candidate account access and self-service application management are outside this landing-page phase.' },
+  { q: 'Can candidates apply for jobs?', a: 'Candidates can continue applying through public career pages without creating an account. A candidate account provides a separate workspace where applicants can verify their email and explicitly connect matching application history.' },
   { q: 'Is OpenATS suitable for small companies?', a: 'Yes. A structured recruitment workspace can help small teams keep job details, candidate conversations and hiring decisions organized as they grow.' },
   { q: 'How can an organization get started?', a: 'Use Get started to create an organization workspace, or log in if your team already has an OpenATS account.' },
 ];
@@ -112,20 +112,20 @@ function SolutionsSection() {
   const solutions = [
     { icon: Building2, label: 'For employers', title: 'Build your team with clarity.', text: 'Bring internal hiring into one shared workspace.', items: ['Manage internal recruitment', 'Organize hiring teams', 'Track applicants by role'], action: 'Create an employer workspace', href: '/signup', tone: 'solutionBlue' },
     { icon: BriefcaseBusiness, label: 'For agencies', title: 'Every client. One clear view.', text: 'Keep multi-client recruitment organized as your desk grows.', items: ['Manage multiple clients', 'Organize client job openings', 'Track candidates across workflows'], action: 'Explore agency workflows', href: '/signup', tone: 'solutionViolet' },
-    { icon: Users, label: 'For candidates', title: 'A more thoughtful job journey.', text: 'Discover opportunities and stay connected to your applications.', items: ['Discover published opportunities', 'Apply for relevant roles', 'Follow application progress'], action: 'Candidate experience coming soon', href: '#candidate-experience', tone: 'solutionSlate', disabled: true },
+    { icon: Users, label: 'For candidates', title: 'A more thoughtful job journey.', text: 'Discover opportunities and stay connected to your applications.', items: ['Discover published opportunities', 'Apply for relevant roles', 'Follow application progress'], action: 'Open candidate portal', href: '/candidate/login', tone: 'solutionSlate' },
   ];
   return (
     <section className={styles.section} id="solutions">
       <div className={styles.container}>
         <SectionIntro eyebrow="Made for every side of hiring" title="One platform. Different perspectives." text="Whether you build teams, recruit for clients or explore your next role, OpenATS is designed around the people in the process." centered />
         <div className={styles.solutionGrid} id="candidate-experience">
-          {solutions.map(({ icon: Icon, label, title, text, items, action, href, tone, disabled }) => (
+          {solutions.map(({ icon: Icon, label, title, text, items, action, href, tone }) => (
             <article className={styles.solutionCard} key={label}>
               <span className={styles.solutionIcon}><Icon size={21} /></span>
               <span className={styles.solutionLabel}>{label}</span>
               <h3>{title}</h3><p>{text}</p>
               <ul>{items.map((item) => <li key={item}><Check size={15} />{item}</li>)}</ul>
-              {disabled ? <span className={styles.comingSoon}>{action}</span> : <Link className={styles.textLink} href={href}>{action}<ArrowUpRight size={15} /></Link>}
+              <Link className={styles.textLink} href={href}>{action}<ArrowUpRight size={15} /></Link>
               <span className={styles[tone as keyof typeof styles]} />
             </article>
           ))}
@@ -242,7 +242,7 @@ function Footer() {
           <div className={styles.footerColumn}><strong>Product</strong><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="#pricing">Pricing</a></div>
           <div className={styles.footerColumn}><strong>Solutions</strong><a href="#solutions">For employers</a><a href="#solutions">For agencies</a><a href="#candidate-experience">For candidates</a></div>
           <div className={styles.footerColumn}><strong>Resources</strong><a href="#resources">FAQs</a><a href="#product-preview">Product preview</a><a href="#resources">Getting started</a></div>
-          <div className={styles.footerColumn}><strong>Account</strong><Link href="/login">Log in</Link><Link href="/signup">Get started</Link><span>Contact details coming soon</span></div>
+          <div className={styles.footerColumn}><strong>Account</strong><Link href="/candidate/login">Candidate sign in</Link><Link href="/login">Recruiter log in</Link><Link href="/signup">Get started</Link><span>Contact details coming soon</span></div>
         </div>
         <div className={styles.footerBottom}>
           <span>© {new Date().getFullYear()} OpenATS. Built for better hiring.</span>
