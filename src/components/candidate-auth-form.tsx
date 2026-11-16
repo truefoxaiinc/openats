@@ -95,11 +95,11 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
             </label>
             <label className="flex items-start gap-2 text-sm text-ink-2">
               <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-1" />
-              <span>I accept the <Link href="/terms" className="underline underline-offset-4">Terms of Use</Link>.</span>
+              <span>I accept the Terms of Use.</span>
             </label>
             <label className="flex items-start gap-2 text-sm text-ink-2">
               <input type="checkbox" required checked={privacyPolicyAccepted} onChange={(e) => setPrivacyPolicyAccepted(e.target.checked)} className="mt-1" />
-              <span>I acknowledge the <Link href="/privacy" className="underline underline-offset-4">Privacy Policy</Link>.</span>
+              <span>I acknowledge the Privacy Policy.</span>
             </label>
           </>
         ) : null}
