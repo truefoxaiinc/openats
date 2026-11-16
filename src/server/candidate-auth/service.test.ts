@@ -59,7 +59,7 @@ describe.skipIf(!databaseAvailable)('candidate registration persistence', () => 
 
   it('normalizes case variants and relies on the database expression index for races', async () => {
     const email = `candidate-${randomUUID()}@example.test`;
-    createdEmails.push(email.toLowerCase());
+    createdEmails.push(email.toUpperCase(), email.toLowerCase());
     await db.candidateAccount.create({
       data: { email: email.toUpperCase(), name: 'Existing Candidate' },
     });
