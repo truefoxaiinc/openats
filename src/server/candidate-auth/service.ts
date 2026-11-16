@@ -7,11 +7,9 @@ import { createOpaqueToken, hashOpaqueToken, tokenExpiry } from './tokens';
 import { normalizeCandidateEmail, validCandidateEmail, validCandidatePassword } from './validation';
 import { requestOrigin } from '@/server/request-origin';
 
-const APP_ORIGIN = () => process.env.NEXTAUTH_URL?.replace(/\/+$/, '') || process.env.AUTH_URL?.replace(/\/+$/, '');
-
-function actionUrl(path: string, token: string): string {
-  const origin = APP_ORIGIN();
-  if (!origin) throw new Error('Set NEXTAUTH_URL or AUTH_URL to the public OpenATS origin');
+async function actionUrl(path: string, token: string): Promise<string> {
+  const { origin } = await requestOrigin();
+  if (!origin) throw new Error('Unable to determine the public OpenATS origin');
   return `${origin}${path}?token=${encodeURIComponent(token)}`;
 }
 
