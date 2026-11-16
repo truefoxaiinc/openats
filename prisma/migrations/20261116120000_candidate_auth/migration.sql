@@ -96,3 +96,16 @@ ALTER TABLE "CandidatePasswordResetToken" ADD CONSTRAINT "CandidatePasswordReset
 ALTER TABLE "CandidateApplicationClaimToken" ADD CONSTRAINT "CandidateApplicationClaimToken_candidateAccountId_fkey" FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CandidateContactLink" ADD CONSTRAINT "CandidateContactLink_candidateAccountId_fkey" FOREIGN KEY ("candidateAccountId") REFERENCES "CandidateAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CandidateContactLink" ADD CONSTRAINT "CandidateContactLink_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE "CandidateAuthRateLimit" (
+  "id" TEXT NOT NULL,
+  "keyHash" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "windowStartedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "attempts" INTEGER NOT NULL DEFAULT 0,
+  "blockedUntil" TIMESTAMP(3),
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "CandidateAuthRateLimit_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "CandidateAuthRateLimit_keyHash_action_key" ON "CandidateAuthRateLimit"("keyHash", "action");
+CREATE INDEX "CandidateAuthRateLimit_blockedUntil_idx" ON "CandidateAuthRateLimit"("blockedUntil");
