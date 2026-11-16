@@ -5,7 +5,7 @@ import { CandidateClaimButton } from '@/components/candidate-claim-button';
 import { CandidateLogoutButton } from '@/components/candidate-logout-button';
 import { requireCandidateAccount } from '@/server/candidate-auth/guards';
 
-export const metadata: Metadata = { title: 'Candidate dashboard | OpenATS' };
+export const metadata: Metadata = { title: 'Candidate dashboard | OpenATS', robots: { index: false, follow: false }, referrer: 'no-referrer' };
 
 function candidateStatus(status: string, stageType: string, rejected: boolean | null): string {
   if (status === 'HIRED') return 'Hired';
