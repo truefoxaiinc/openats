@@ -5,6 +5,7 @@ import { sendCandidateEmail } from './email';
 import { createCandidateSession } from './session';
 import { createOpaqueToken, hashOpaqueToken, tokenExpiry } from './tokens';
 import { normalizeCandidateEmail, validCandidateEmail, validCandidatePassword } from './validation';
+import { requestOrigin } from '@/server/request-origin';
 
 const APP_ORIGIN = () => process.env.NEXTAUTH_URL?.replace(/\/+$/, '') || process.env.AUTH_URL?.replace(/\/+$/, '');
 
@@ -41,7 +42,7 @@ export async function registerCandidate(input: { name: unknown; email: unknown; 
   await sendCandidateEmail(
     email,
     'Verify your OpenATS candidate account',
-    `Hi ${name},\n\nVerify your email address to activate your OpenATS candidate account:\n\n${actionUrl('/candidate/verify-email', rawToken)}\n\nThis link expires in 30 minutes. If you did not create this account, you can ignore this email.`,
+    `Hi ${name},\n\nVerify your email address to activate your OpenATS candidate account:\n\n${await actionUrl('/candidate/verify-email', rawToken)}\n\nThis link expires in 30 minutes. If you did not create this account, you can ignore this email.`,
   );
   return { ok: true as const };
 }
@@ -92,7 +93,7 @@ export async function requestCandidatePasswordReset(rawEmail: unknown) {
   await sendCandidateEmail(
     email,
     'Reset your OpenATS password',
-    `Hi ${account.name},\n\nUse this one-time link to reset your OpenATS candidate password:\n\n${actionUrl('/candidate/reset-password', rawToken)}\n\nThis link expires in 30 minutes. If you did not request a reset, you can ignore this email.`,
+    `Hi ${account.name},\n\nUse this one-time link to reset your OpenATS candidate password:\n\n${await actionUrl('/candidate/reset-password', rawToken)}\n\nThis link expires in 30 minutes. If you did not request a reset, you can ignore this email.`,
   );
 }
 
@@ -134,7 +135,7 @@ export async function requestApplicationClaim(candidateAccountId: string) {
   await sendCandidateEmail(
     account.email,
     'Confirm your OpenATS application history',
-    `Hi ${account.name},\n\nYou asked to connect applications associated with this verified email address to your OpenATS candidate account. Confirm that request here:\n\n${actionUrl('/candidate/claim-applications', rawToken)}\n\nThis one-time link expires in 30 minutes. No applications are connected unless you open this link.`,
+    `Hi ${account.name},\n\nYou asked to connect applications associated with this verified email address to your OpenATS candidate account. Confirm that request here:\n\n${await actionUrl('/candidate/claim-applications', rawToken)}\n\nThis one-time link expires in 30 minutes. No applications are connected unless you open this link.`,
   );
 }
 
@@ -214,4 +215,20 @@ export async function signInCandidateWithGoogle(input: {
     }
     throw error;
   }
+}
+
+
+/** Verify the bearer claim link from email; the token itself identifies the account. */
+export async function confirmApplicationClaimByToken(rawToken: string) {
+  if (!rawToken || rawToken.length > 256) return 0;
+  const record = await db.candidateApplicationClaimToken.findFirst({
+    where: {
+      tokenHash: hashOpaqueToken(rawToken),
+      consumedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    select: { candidateAccountId: true },
+  });
+  if (!record) return 0;
+  return confirmApplicationClaim(rawToken, record.candidateAccountId);
 }
