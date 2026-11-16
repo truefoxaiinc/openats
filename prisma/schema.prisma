@@ -1620,7 +1620,6 @@ model CandidateLanguage {
 model CandidateResumeParseJob {
   id String @id @default(uuid())
   candidateAccountId String
-  candidateAccount CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
   candidateResumeId String
   candidateResume CandidateResume @relation(fields: [candidateResumeId, candidateAccountId], references: [id, candidateAccountId], onDelete: Cascade)
   status CandidateResumeParseJobStatus @default(QUEUED)
