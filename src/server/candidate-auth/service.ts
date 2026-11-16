@@ -29,6 +29,7 @@ export async function registerCandidate(input: { name: unknown; email: unknown; 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return { ok: true as const };
     throw error;
   }
+  await db.candidateEmailVerificationToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
   const rawToken = createOpaqueToken();
   await db.candidateEmailVerificationToken.create({
     data: {
@@ -104,6 +105,7 @@ export async function requestCandidatePasswordReset(rawEmail: unknown) {
   if (!validCandidateEmail(email)) return;
   const account = await db.candidateAccount.findUnique({ where: { email } });
   if (!account?.emailVerifiedAt) return;
+  await db.candidatePasswordResetToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
   const rawToken = createOpaqueToken();
   await db.candidatePasswordResetToken.create({
     data: {
@@ -150,6 +152,7 @@ export async function resetCandidatePassword(rawToken: string, rawPassword: unkn
 export async function requestApplicationClaim(candidateAccountId: string) {
   const account = await db.candidateAccount.findUnique({ where: { id: candidateAccountId } });
   if (!account?.emailVerifiedAt) throw new Error('A verified candidate account is required');
+  await db.candidateApplicationClaimToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
   const rawToken = createOpaqueToken();
   await db.candidateApplicationClaimToken.create({
     data: {
