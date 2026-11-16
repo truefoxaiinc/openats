@@ -1369,11 +1369,17 @@ model CaseStudy {
 // Contact/application access is granted only through an explicit verified claim.
 model CandidateAccount {
   id              String   @id @default(uuid())
-  email           String   @unique
-  name            String
-  passwordHash    String?
-  emailVerifiedAt DateTime?
-  createdAt       DateTime @default(now())
+  email                   String   @unique
+  name                    String
+  passwordHash            String?
+  emailVerifiedAt         DateTime?
+  phoneE164               String?
+  phoneCountryCode        String?
+  termsAcceptedAt         DateTime?
+  termsVersion            String?
+  privacyPolicyAcceptedAt DateTime?
+  privacyPolicyVersion    String?
+  createdAt               DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   oauthIdentities        CandidateOAuthIdentity[]

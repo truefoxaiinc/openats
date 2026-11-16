@@ -13,18 +13,49 @@ async function actionUrl(path: string, token: string): Promise<string> {
   return `${origin}${path}?token=${encodeURIComponent(token)}`;
 }
 
-export async function registerCandidate(input: { name: unknown; email: unknown; password: unknown }) {
+const CANDIDATE_TERMS_VERSION = 'candidate-terms-v1';
+const CANDIDATE_PRIVACY_VERSION = 'candidate-privacy-v1';
+
+export async function registerCandidate(input: {
+  name: unknown;
+  email: unknown;
+  password: unknown;
+  phoneE164?: unknown;
+  phoneCountryCode?: unknown;
+  termsAccepted?: unknown;
+  privacyPolicyAccepted?: unknown;
+}) {
   const name = typeof input.name === 'string' ? input.name.trim().replace(/\s+/g, ' ').slice(0, 120) : '';
   const email = normalizeCandidateEmail(input.email);
-  if (name.length < 2 || !validCandidateEmail(email) || !validCandidatePassword(input.password)) {
-    return { ok: false as const, error: 'Enter a name, valid email and password (at least 12 characters).' };
+  const phoneE164 = typeof input.phoneE164 === 'string' ? input.phoneE164.trim() : '';
+  const phoneCountryCode = typeof input.phoneCountryCode === 'string' ? input.phoneCountryCode.trim() : '';
+  const hasPhone = Boolean(phoneE164 || phoneCountryCode);
+  const validPhone = !hasPhone || (/^\+[1-9]\d{7,14}$/.test(phoneE164)
+    && /^\+[1-9]\d{0,3}$/.test(phoneCountryCode)
+    && phoneE164.startsWith(phoneCountryCode));
+  if (name.length < 2 || !validCandidateEmail(email) || !validCandidatePassword(input.password)
+    || input.termsAccepted !== true || input.privacyPolicyAccepted !== true || !validPhone) {
+    return { ok: false as const, error: 'Enter valid account details and accept the Terms of Use and Privacy Policy.' };
   }
   const existing = await db.candidateAccount.findUnique({ where: { email }, select: { id: true } });
   if (existing) return { ok: true as const };
   const passwordHash = await bcrypt.hash(input.password, 12);
   let account;
   try {
-    account = await db.candidateAccount.create({ data: { name, email, passwordHash } });
+    const acceptedAt = new Date();
+    account = await db.candidateAccount.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        phoneE164: phoneE164 || null,
+        phoneCountryCode: phoneCountryCode || null,
+        termsAcceptedAt: acceptedAt,
+        termsVersion: CANDIDATE_TERMS_VERSION,
+        privacyPolicyAcceptedAt: acceptedAt,
+        privacyPolicyVersion: CANDIDATE_PRIVACY_VERSION,
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return { ok: true as const };
     throw error;
