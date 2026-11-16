@@ -13,9 +13,9 @@
 .nav { width: min(1240px, calc(100% - 48px)); height: 76px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--color-ink); text-decoration: none; font-size: 21px; font-weight: 500; letter-spacing: -1.1px; }
 .brandIcon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #ffffff; background: linear-gradient(145deg, #0a0a0a, #9b9a96); box-shadow: 0 5px 14px #9b9a96; }
-.brandAccent { color: #9b9a96; }
+.brandAccent { color: var(--color-ink-3); }
 .desktopLinks { display: flex; align-items: center; gap: clamp(16px, 2.3vw, 32px); margin-left: auto; }
-.desktopLinks a, .loginLink { color: #9b9a96; font-size: 13px; font-weight: 550; text-decoration: none; transition: color .18s ease; }
+.desktopLinks a, .loginLink { color: #9b9a96; font-size: 13px; font-weight: 500; text-decoration: none; transition: color .18s ease; }
 .desktopLinks a:hover, .loginLink:hover { color: var(--color-ink); }
 .navActions { display: flex; align-items: center; gap: 22px; }
 .navCta, .primaryButton { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; padding: 12px 18px; color: white; background: #0a0a0a; box-shadow: 0 7px 18px #0a0a0a; text-decoration: none; font-size: 13px; font-weight: 500; transition: transform .2s, background .2s, box-shadow .2s; }
@@ -28,12 +28,12 @@
 .heroCopy { position: relative; z-index: 2; padding-bottom: 16px; }
 .heroBadge { display: inline-flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid #f5f4f2; border-radius: 999px; background: var(--color-surface); color: #9b9a96; font-size: 11px; font-weight: 500; letter-spacing: normal; box-shadow: 0 5px 18px #6b6a67; }
 .heroBadge > span { width: 7px; height: 7px; border-radius: 50%; background: #9b9a96; box-shadow: 0 0 0 4px #9b9a96; }
-.hero h1 { margin: 28px 0 22px; color: var(--color-ink); font-size: clamp(48px, 5.4vw, 72px); line-height: 1.02; letter-spacing: -.065em; font-weight: 680; }
+.hero h1 { margin: 28px 0 22px; color: var(--color-ink); font-size: clamp(48px, 5.4vw, 72px); line-height: 1.02; letter-spacing: -.065em; font-weight: 500; }
 .hero h1 span { color: #9b9a96; }
 .heroCopy > p { max-width: 510px; margin: 0; color: #9b9a96; font-size: 16px; line-height: 1.8; }
 .heroActions { display: flex; align-items: center; gap: 24px; margin-top: 32px; }
 .primaryButton { min-height: 49px; padding-inline: 23px; font-size: 14px; }
-.secondaryButton { display: inline-flex; align-items: center; gap: 9px; color: #6b6a67; font-size: 13px; font-weight: 500; text-decoration: none; }
+.secondaryButton { display: inline-flex; align-items: center; gap: 9px; color: var(--color-ink-2); font-size: 13px; font-weight: 500; text-decoration: none; }
 .secondaryButton:hover { color: var(--color-ink); }
 .heroNote { display: flex; align-items: center; gap: 8px; margin-top: 27px; color: #9b9a96; font-size: 11px; }
 .heroNote svg { color: #3f8f5f; }
@@ -42,7 +42,7 @@
 .heroVisual > .previewShell { position: relative; z-index: 1; transform: perspective(1400px) rotateY(-5deg) rotateX(2deg); transform-origin: center; }
 .visualBadge, .heroMiniCard { position: absolute; z-index: 3; display: flex; align-items: center; gap: 10px; border: 1px solid #f5f4f2; border-radius: 14px; background: var(--color-surface); box-shadow: 0 15px 40px #6b6a67; }
 .visualBadge { top: 0; left: -7px; padding: 12px 15px; }
-.visualBadgeIcon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: #9b9a96; background: #f5f4f2; }
+.visualBadgeIcon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: #9b9a96; background: var(--color-canvas); }
 .visualBadge b, .heroMiniCard b { display: block; color: #6b6a67; font-size: 11px; }
 .visualBadge small, .heroMiniCard small { display: block; margin-top: 3px; color: #9b9a96; font-size: 9px; }
 .heroMiniCard { right: -20px; bottom: 0; padding: 12px 14px; }
@@ -76,7 +76,7 @@
 .stepCard { position: relative; min-height: 205px; padding: 26px; border: 1px solid #f5f4f2; border-radius: 17px; background: var(--color-surface); }
 .stepTop { display: flex; align-items: center; justify-content: space-between; color: #9b9a96; }
 .stepTop > span { color: #edece9; font-size: 11px; font-weight: 500; letter-spacing: normal; }
-.stepCard h3 { margin: 27px 0 9px; color: var(--color-ink); font-size: 17px; font-weight: 680; }
+.stepCard h3 { margin: 27px 0 9px; color: var(--color-ink); font-size: 17px; font-weight: 500; }
 .stepCard p { max-width: 280px; margin: 0; color: #9b9a96; font-size: 12px; line-height: 1.8; }
 .stepConnector { position: absolute; top: 48%; right: -27px; z-index: 2; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #f5f4f2; border-radius: 50%; color: #9b9a96; background: white; }
 .solutionGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
