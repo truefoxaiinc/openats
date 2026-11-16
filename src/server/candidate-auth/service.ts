@@ -85,6 +85,7 @@ export async function resendCandidateVerification(rawEmail: unknown) {
   if (!validCandidateEmail(email)) return;
   const account = await db.candidateAccount.findUnique({ where: { email } });
   if (!account || account.emailVerifiedAt || !account.passwordHash) return;
+  await db.candidateEmailVerificationToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
   const rawToken = createOpaqueToken();
   await db.candidateEmailVerificationToken.create({
     data: {
