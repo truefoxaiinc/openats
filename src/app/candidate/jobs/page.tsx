@@ -118,7 +118,7 @@ export default async function CandidateJobsPage({
                     </div>
                     <p className="mt-3 text-xs text-ink-3">Published {posting.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                   </div>
-                  <Link href={`/careers/${posting.org.slug}/${posting.slug}`} className="inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-line px-4 text-sm font-medium text-ink transition-colors hover:bg-muted">View job & apply</Link>
+                  <Link href={`/candidate/jobs/${posting.org.slug}/${posting.slug}`} className="inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-line px-4 text-sm font-medium text-ink transition-colors hover:bg-muted">View job & apply</Link>
                 </div>
               </article>
             );
