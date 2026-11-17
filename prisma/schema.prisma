@@ -253,6 +253,7 @@ model Opportunity {
   updatedAt       DateTime          @updatedAt
 
   stageTransitions StageTransition[]
+  candidateApplication CandidateApplication?
   notes            Note[]
   interviews       Interview[]
   feedback         FeedbackSubmission[]
@@ -383,6 +384,7 @@ model Posting {
   updatedAt     DateTime      @updatedAt
 
   opportunities Opportunity[]
+  candidateApplications CandidateApplication[]
   planSteps     InterviewPlanStep[]
   referrals     Referral[]
 
@@ -1390,6 +1392,7 @@ model CandidateAccount {
   contactLinks           CandidateContactLink[]
   resumes                CandidateResume[]
   profile                CandidateProfile?
+  applications            CandidateApplication[]
 
   @@index([emailVerifiedAt])
 }
@@ -1534,6 +1537,7 @@ model CandidateResume {
   status CandidateResumeStatus @default(STORED)
   parseJobs CandidateResumeParseJob[]
   fieldReviews CandidateProfileFieldReview[]
+  applications CandidateApplication[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([id, candidateAccountId])
@@ -1717,4 +1721,29 @@ model CandidateResumeParseJob {
   @@index([status, availableAt])
   @@index([candidateAccountId, createdAt])
   @@index([candidateResumeId, createdAt])
+}
+
+
+// A candidate-account application is the auditable bridge between a verified
+// candidate identity and the recruiter's existing Opportunity pipeline.
+model CandidateApplication {
+  id                 String           @id @default(uuid())
+  candidateAccountId String
+  candidateAccount   CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Restrict)
+  postingId          String
+  posting             Posting          @relation(fields: [postingId], references: [id], onDelete: Restrict)
+  opportunityId      String           @unique
+  opportunity        Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  resumeId           String?
+  resume             CandidateResume? @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  answers            Json?
+  withdrawnAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // One application per candidate and posting prevents duplicate submissions,
+  // including concurrent requests with different client-generated tokens.
+  @@unique([candidateAccountId, postingId])
+  @@index([candidateAccountId, createdAt])
+  @@index([postingId, createdAt])
 }
