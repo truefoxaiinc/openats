@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { BriefcaseBusiness, FileText, UserRound } from 'lucide-react';
 import { db } from '@/lib/db';
 import { Badge } from '@/components/ui/primitives';
 import { CandidateClaimButton } from '@/components/candidate-claim-button';
@@ -24,7 +26,7 @@ const statusTone: Record<string, 'positive' | 'critical' | 'neutral' | 'info' | 
 
 export default async function CandidateDashboardPage() {
   const account = await requireCandidateAccount();
-  const [candidateApplications, links] = await Promise.all([
+  const [candidateApplications, links, profile, resumes, publishedJobsCount] = await Promise.all([
     db.candidateApplication.findMany({
       where: { candidateAccountId: account.id },
       orderBy: { createdAt: 'desc' },
@@ -60,6 +62,16 @@ export default async function CandidateDashboardPage() {
       },
     },
     }),
+    db.candidateProfile.findUnique({
+      where: { candidateAccountId: account.id },
+      select: { headline: true, summary: true, location: true, city: true, skills: { select: { id: true } }, experience: { select: { id: true } }, education: { select: { id: true } }, projects: { select: { id: true } } },
+    }),
+    db.candidateResume.findMany({
+      where: { candidateAccountId: account.id, status: 'STORED' },
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true, originalFilename: true, isPrimary: true, parseJobs: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true, safeErrorMessage: true } } },
+    }),
+    db.posting.count({ where: { state: 'PUBLISHED' } }),
   ]);
   const directOpportunityIds = new Set(candidateApplications.map((application) => application.opportunityId));
   const directHistory = candidateApplications.map((application) => ({
@@ -79,6 +91,10 @@ export default async function CandidateDashboardPage() {
       status: candidateStatus(opp.status, opp.stage.type, opp.archiveReason?.countsAsRejection ?? null),
     })));
   const applications = [...directHistory, ...historicalLinks].sort((a, b) => b.appliedAt.getTime() - a.appliedAt.getTime());
+  const profileSections = [Boolean(profile?.headline), Boolean(profile?.summary), Boolean(profile?.location || profile?.city), Boolean(profile?.skills.length), Boolean(profile?.experience.length), Boolean(profile?.education.length), Boolean(profile?.projects.length), resumes.length > 0];
+  const profileCompletion = Math.round((profileSections.filter(Boolean).length / profileSections.length) * 100);
+  const primaryResume = resumes[0];
+  const resumeStatus = primaryResume?.parseJobs[0]?.status ?? (primaryResume ? 'STORED' : 'MISSING');
 
   return (
     <CandidateWorkspaceShell>
@@ -88,6 +104,39 @@ export default async function CandidateDashboardPage() {
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Hello, {account.name}</h1>
           <p className="mt-2 text-sm text-ink-2">{account.email}</p>
           <Badge tone="positive" className="mt-4">Email verified</Badge>
+        </section>
+        <section aria-label="Candidate overview" className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article className="rounded-card border border-line bg-surface p-5">
+            <p className="text-xs font-medium text-ink-3">Applications</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-ink">{applications.length}</p>
+            <p className="mt-1 text-xs text-ink-3">Connected and submitted</p>
+          </article>
+          <article className="rounded-card border border-line bg-surface p-5">
+            <p className="text-xs font-medium text-ink-3">Available jobs</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-ink">{publishedJobsCount}</p>
+            <Link href="/candidate/jobs" className="mt-1 inline-flex text-xs font-medium text-ink underline underline-offset-4">Explore published jobs</Link>
+          </article>
+          <article className="rounded-card border border-line bg-surface p-5">
+            <p className="text-xs font-medium text-ink-3">My resumes</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-ink">{resumes.length}</p>
+            <p className="mt-1 truncate text-xs text-ink-3">{primaryResume?.originalFilename ?? 'No resume uploaded'}</p>
+          </article>
+          <article className="rounded-card border border-line bg-surface p-5">
+            <p className="text-xs font-medium text-ink-3">Profile completion</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-ink">{profileCompletion}%</p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-ink" style={{ width: `${profileCompletion}%` }} /></div>
+            <Link href="/candidate/profile" className="mt-2 inline-flex text-xs font-medium text-ink underline underline-offset-4">Complete profile</Link>
+          </article>
+        </section>
+        <section className="mt-6 rounded-card border border-line bg-surface p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-ink-3">Resume readiness</p>
+              <p className="mt-1 truncate text-sm font-medium text-ink">{primaryResume?.originalFilename ?? 'Upload your resume to get started'}</p>
+              <p className="mt-1 text-xs text-ink-2">{primaryResume ? (primaryResume.parseJobs[0]?.safeErrorMessage ?? `Latest processing status: ${resumeStatus.toLowerCase().replaceAll('_', ' ')}`) : 'A stored resume is required to apply through your Candidate Portal.'}</p>
+            </div>
+            <Link href="/candidate/resumes" className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-line px-4 text-sm font-medium text-ink hover:bg-muted"><FileText size={15}/> Manage resumes</Link>
+          </div>
         </section>
         <section id="applications" className="mt-8">
           <div className="flex items-end justify-between gap-4">
