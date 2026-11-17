@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Home, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, FileText, Home, UserRound } from 'lucide-react';
 import { SourceLockup } from '@/components/powered-by';
 import { CandidateLogoutButton } from '@/components/candidate-logout-button';
 import { cn } from '@/lib/utils';
 
 const nav = [
   { href: '/candidate/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/candidate/jobs', label: 'Find jobs', icon: BriefcaseBusiness },
   { href: '/candidate/profile', label: 'My profile', icon: UserRound },
   { href: '/candidate/resumes', label: 'My resumes', icon: FileText },
 ];
