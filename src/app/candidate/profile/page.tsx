@@ -15,7 +15,7 @@ export default async function CandidateProfilePage() {
 
   return (
     <CandidateWorkspaceShell>
-      <div className="w-full max-w-4xl">
+      <div className="w-full">
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">My profile</h1>
           <p className="mt-2 text-sm text-ink-2">Review and update information extracted from your resume.</p>
