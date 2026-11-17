@@ -24,7 +24,22 @@ const statusTone: Record<string, 'positive' | 'critical' | 'neutral' | 'info' | 
 
 export default async function CandidateDashboardPage() {
   const account = await requireCandidateAccount();
-  const links = await db.candidateContactLink.findMany({
+  const [candidateApplications, links] = await Promise.all([
+    db.candidateApplication.findMany({
+      where: { candidateAccountId: account.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        opportunity: {
+          include: {
+            org: { select: { name: true } },
+            posting: { select: { title: true, clientCompany: { select: { name: true } } } },
+            stage: { select: { type: true } },
+            archiveReason: { select: { countsAsRejection: true } },
+          },
+        },
+      },
+    }),
+    db.candidateContactLink.findMany({
     where: { candidateAccountId: account.id, contact: { isAnonymized: false } },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -44,14 +59,26 @@ export default async function CandidateDashboardPage() {
         },
       },
     },
-  });
-  const applications = links.flatMap((link) => link.contact.opportunities.map((opp) => ({
-    id: opp.id,
-    title: opp.posting?.title ?? 'General application',
-    company: opp.posting?.clientCompany?.name ?? opp.org.name,
-    appliedAt: opp.createdAt,
-    status: candidateStatus(opp.status, opp.stage.type, opp.archiveReason?.countsAsRejection ?? null),
-  }))).sort((a, b) => b.appliedAt.getTime() - a.appliedAt.getTime());
+    }),
+  ]);
+  const directOpportunityIds = new Set(candidateApplications.map((application) => application.opportunityId));
+  const directHistory = candidateApplications.map((application) => ({
+    id: application.id,
+    title: application.opportunity.posting?.title ?? 'General application',
+    company: application.opportunity.posting?.clientCompany?.name ?? application.opportunity.org.name,
+    appliedAt: application.createdAt,
+    status: application.withdrawnAt ? 'Withdrawn' : candidateStatus(application.opportunity.status, application.opportunity.stage.type, application.opportunity.archiveReason?.countsAsRejection ?? null),
+  }));
+  const historicalLinks = links.flatMap((link) => link.contact.opportunities
+    .filter((opp) => !directOpportunityIds.has(opp.id))
+    .map((opp) => ({
+      id: opp.id,
+      title: opp.posting?.title ?? 'General application',
+      company: opp.posting?.clientCompany?.name ?? opp.org.name,
+      appliedAt: opp.createdAt,
+      status: candidateStatus(opp.status, opp.stage.type, opp.archiveReason?.countsAsRejection ?? null),
+    })));
+  const applications = [...directHistory, ...historicalLinks].sort((a, b) => b.appliedAt.getTime() - a.appliedAt.getTime());
 
   return (
     <CandidateWorkspaceShell>
@@ -84,8 +111,8 @@ export default async function CandidateDashboardPage() {
             </div>
           ) : (
             <div className="mt-4 rounded-card border border-dashed border-line bg-surface px-6 py-8">
-              <h3 className="text-sm font-medium text-ink">No connected applications yet</h3>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-ink-2">Your public job applications remain separate from your candidate account. You can explicitly connect application records associated with this verified email address.</p>
+              <h3 className="text-sm font-medium text-ink">No applications yet</h3>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-ink-2">Apply to a published job to start tracking your applications here. Previously connected applications remain available below.</p>
             </div>
           )}
           <CandidateClaimButton />
