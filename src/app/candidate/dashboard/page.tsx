@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { Badge } from '@/components/ui/primitives';
 import { CandidateClaimButton } from '@/components/candidate-claim-button';
-import { CandidateLogoutButton } from '@/components/candidate-logout-button';
 import { requireCandidateAccount } from '@/server/candidate-auth/guards';
+import { CandidateWorkspaceShell } from '@/components/candidate-workspace-shell';
 
 export const metadata: Metadata = { title: 'Candidate dashboard | OpenATS', robots: { index: false, follow: false }, referrer: 'no-referrer' };
 
@@ -54,49 +54,44 @@ export default async function CandidateDashboardPage() {
   }))).sort((a, b) => b.appliedAt.getTime() - a.appliedAt.getTime());
 
   return (
-    <div className="w-full max-w-4xl">
-      <header className="mb-10 flex items-center justify-between gap-4">
-        <div>
-          <a href="/" className="text-sm font-semibold tracking-tight text-ink">OpenATS</a>
-          <p className="mt-1 text-xs text-ink-3">Candidate workspace</p>
-        </div>
-        <CandidateLogoutButton />
-      </header>
-      <section className="rounded-card border border-line bg-surface p-6 sm:p-8">
-        <p className="text-xs font-medium text-ink-3">Your account</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Hello, {account.name}</h1>
-        <p className="mt-2 text-sm text-ink-2">{account.email}</p>
-        <Badge tone="positive" className="mt-4">Email verified</Badge>
-      </section>
-      <section className="mt-8">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium text-ink-3">Your recruitment activity</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">Application history</h2>
+    <CandidateWorkspaceShell>
+      <div className="w-full max-w-4xl">
+        <section className="rounded-card border border-line bg-surface p-6 sm:p-8">
+          <p className="text-xs font-medium text-ink-3">Your account</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Hello, {account.name}</h1>
+          <p className="mt-2 text-sm text-ink-2">{account.email}</p>
+          <Badge tone="positive" className="mt-4">Email verified</Badge>
+        </section>
+        <section id="applications" className="mt-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium text-ink-3">Your recruitment activity</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">Application history</h2>
+            </div>
+            <span className="text-sm text-ink-3">{applications.length} applications</span>
           </div>
-          <span className="text-sm text-ink-3">{applications.length} applications</span>
-        </div>
-        {applications.length ? (
-          <div className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
-            {applications.map((application) => (
-              <article key={application.id} className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-medium text-ink">{application.title}</h3>
-                  <p className="mt-1 text-xs text-ink-2">{application.company} · Applied {application.appliedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                </div>
-                <Badge tone={statusTone[application.status] ?? 'neutral'}>{application.status}</Badge>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-card border border-dashed border-line bg-surface px-6 py-8">
-            <h3 className="text-sm font-medium text-ink">No connected applications yet</h3>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-ink-2">Your public job applications remain separate from your candidate account. You can explicitly connect application records associated with this verified email address.</p>
-          </div>
-        )}
-        <CandidateClaimButton />
-      </section>
-      <p className="mt-8 text-xs leading-5 text-ink-3">Application details are shown only after you explicitly verify and connect the matching email address. Internal recruiter notes and confidential applications are not displayed.</p>
-    </div>
+          {applications.length ? (
+            <div className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
+              {applications.map((application) => (
+                <article key={application.id} className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-medium text-ink">{application.title}</h3>
+                    <p className="mt-1 text-xs text-ink-2">{application.company} · Applied {application.appliedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  </div>
+                  <Badge tone={statusTone[application.status] ?? 'neutral'}>{application.status}</Badge>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-card border border-dashed border-line bg-surface px-6 py-8">
+              <h3 className="text-sm font-medium text-ink">No connected applications yet</h3>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-ink-2">Your public job applications remain separate from your candidate account. You can explicitly connect application records associated with this verified email address.</p>
+            </div>
+          )}
+          <CandidateClaimButton />
+        </section>
+        <p className="mt-8 text-xs leading-5 text-ink-3">Application details are shown only after you explicitly verify and connect the matching email address. Internal recruiter notes and confidential applications are not displayed.</p>
+      </div>
+    </CandidateWorkspaceShell>
   );
 }
