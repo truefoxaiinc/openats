@@ -25,6 +25,10 @@ export type ApplicationInput = {
   utm?: { source?: string; medium?: string; campaign?: string };
   /** Voluntary EEO self-ID — stored with NO candidate linkage (aggregate only). */
   eeo?: { gender?: string; race?: string; veteran?: string; disability?: string };
+  /** Verified candidate account for authenticated Candidate Portal submissions. */
+  candidateAccountId?: string;
+  /** Candidate-owned resume selected for this application; recruiter copy is stored separately. */
+  candidateResumeId?: string;
 };
 
 /**
@@ -79,6 +83,13 @@ export async function submitApplication(input: ApplicationInput) {
   const resumeText = resume?.extracted.text ?? null;
 
   const opportunity = await db.$transaction(async (tx) => {
+    if (input.candidateAccountId) {
+      const existing = await tx.candidateApplication.findUnique({
+        where: { candidateAccountId_postingId: { candidateAccountId: input.candidateAccountId, postingId: posting.id } },
+        select: { id: true },
+      });
+      if (existing) throw new Error('Candidate has already applied to this posting');
+    }
     let contact = await tx.contact.findFirst({
       where: { orgId: org.id, emails: { has: email } },
     });
@@ -114,7 +125,7 @@ export async function submitApplication(input: ApplicationInput) {
         postingId: posting.id,
         stageId: stage.id,
         origin: 'APPLIED',
-        source: input.utm?.source?.trim() || 'careers site',
+        source: input.candidateAccountId ? 'candidate portal' : input.utm?.source?.trim() || 'careers site',
         customFields: {
           ...(input.coverNote?.trim() ? { coverNote: input.coverNote.trim() } : {}),
           ...(input.utm && (input.utm.source || input.utm.medium || input.utm.campaign)
@@ -126,6 +137,20 @@ export async function submitApplication(input: ApplicationInput) {
     await tx.stageTransition.create({
       data: { opportunityId: opportunity.id, toStageId: stage.id },
     });
+    if (input.candidateAccountId) {
+      await tx.candidateContactLink.createMany({
+        data: [{ candidateAccountId: input.candidateAccountId, contactId: contact.id }],
+        skipDuplicates: true,
+      });
+      await tx.candidateApplication.create({
+        data: {
+          candidateAccountId: input.candidateAccountId,
+          postingId: posting.id,
+          opportunityId: opportunity.id,
+          resumeId: input.candidateResumeId ?? null,
+        },
+      });
+    }
     // Consent to process the application itself (GDPR basis, auditable)
     await tx.consentRecord.create({
       data: { orgId: org.id, contactId: contact.id, purpose: 'APPLICATION' },
