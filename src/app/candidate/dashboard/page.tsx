@@ -62,13 +62,14 @@ export default async function CandidateDashboardPage() {
         </div>
         <CandidateLogoutButton />
       </header>
+      <nav className="mb-6 flex flex-wrap gap-4 text-sm"><a className="text-ink underline" href="/candidate/dashboard">Dashboard</a><a className="text-ink underline" href="/candidate/profile">My Profile</a><a className="text-ink underline" href="/candidate/resumes">My Resume</a><a className="text-ink underline" href="#applications">Application History</a></nav>
       <section className="rounded-card border border-line bg-surface p-6 sm:p-8">
         <p className="text-xs font-medium text-ink-3">Your account</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Hello, {account.name}</h1>
         <p className="mt-2 text-sm text-ink-2">{account.email}</p>
         <Badge tone="positive" className="mt-4">Email verified</Badge>
       </section>
-      <section className="mt-8">
+      <section id="applications" className="mt-8">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium text-ink-3">Your recruitment activity</p>
