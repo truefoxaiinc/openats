@@ -66,7 +66,7 @@ export function CandidateWorkspaceShell({ children }: { children: React.ReactNod
       </aside>
 
       <main className="min-w-0 flex-1 px-0 pb-28 md:pb-0">
-        <div className="mx-auto w-full max-w-5xl px-5 py-7 sm:px-7 md:py-9">
+        <div className="w-full px-5 py-7 sm:px-7 md:py-9">
           {children}
         </div>
       </main>
