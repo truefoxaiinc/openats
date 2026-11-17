@@ -1490,10 +1490,36 @@ enum CandidateResumeStatus {
   DELETE_PENDING
 }
 enum CandidateResumeParseJobStatus {
+  UPLOADED
   QUEUED
+  EXTRACTING
+  PARSING
+  REVIEW_REQUIRED
+  COMPLETED
+  FAILED
+  CANCELLED
+  // Retained for compatibility with Phase 1B.1 job records.
   PROCESSING
   SUCCEEDED
-  FAILED
+}
+
+enum CandidateAdditionalInformationType {
+  AWARD
+  PUBLICATION
+  VOLUNTEER_EXPERIENCE
+  PROFESSIONAL_MEMBERSHIP
+}
+
+enum CandidateProfileDataSource {
+  AI_EXTRACTED
+  CANDIDATE_ENTERED
+  CANDIDATE_EDITED
+}
+
+enum CandidateProfileReviewStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
 }
 model CandidateResume {
   id String @id @default(uuid())
@@ -1507,6 +1533,7 @@ model CandidateResume {
   isPrimary Boolean @default(false)
   status CandidateResumeStatus @default(STORED)
   parseJobs CandidateResumeParseJob[]
+  fieldReviews CandidateProfileFieldReview[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([id, candidateAccountId])
@@ -1519,10 +1546,14 @@ model CandidateProfile {
   candidateAccountId String @unique
   candidateAccount CandidateAccount @relation(fields: [candidateAccountId], references: [id], onDelete: Cascade)
   headline String?
-  summary String?
+  summary String? // Candidate-facing professional summary.
   location String?
+  country String?
+  city String?
+  address String?
   linkedinUrl String?
-  websiteUrl String?
+  websiteUrl String? // Kept to preserve existing profile data.
+  portfolioUrl String?
   githubUrl String?
   totalExperienceMonths Int?
   education CandidateEducation[]
@@ -1531,8 +1562,12 @@ model CandidateProfile {
   projects CandidateProject[]
   certifications CandidateCertification[]
   languages CandidateLanguage[]
+  additionalInformation CandidateAdditionalInformation[]
+  fieldReviews CandidateProfileFieldReview[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([id, candidateAccountId])
 }
 model CandidateEducation {
   id String @id @default(uuid())
@@ -1545,6 +1580,7 @@ model CandidateEducation {
   startDate DateTime?
   endDate DateTime?
   description String?
+  gradeGpa String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([candidateProfileId, startDate])
@@ -1561,6 +1597,8 @@ model CandidateExperience {
   endDate DateTime?
   isCurrent Boolean @default(false)
   description String?
+  responsibilities String?
+  achievements String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([candidateProfileId, startDate])
@@ -1585,6 +1623,7 @@ model CandidateProject {
   name String
   role String?
   description String?
+  technologies String[] @default([])
   url String?
   startDate DateTime?
   endDate DateTime?
@@ -1617,6 +1656,47 @@ model CandidateLanguage {
   @@unique([candidateProfileId, name])
   @@index([candidateProfileId])
 }
+model CandidateAdditionalInformation {
+  id String @id @default(uuid())
+  candidateProfileId String
+  candidateProfile CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  type CandidateAdditionalInformationType
+  title String
+  organization String?
+  description String?
+  url String?
+  startDate DateTime?
+  endDate DateTime?
+  occurredAt DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateProfileId, type, occurredAt])
+}
+
+model CandidateProfileFieldReview {
+  id String @id @default(uuid())
+  candidateAccountId String
+  candidateProfileId String
+  candidateProfile CandidateProfile @relation(fields: [candidateProfileId, candidateAccountId], references: [id, candidateAccountId], onDelete: Cascade)
+  entityType String
+  entityId String
+  fieldKey String
+  dataSource CandidateProfileDataSource
+  reviewStatus CandidateProfileReviewStatus @default(PENDING)
+  sourceResumeId String?
+  sourceResume CandidateResume? @relation(fields: [sourceResumeId], references: [id], onDelete: SetNull)
+  confidence Float?
+  confirmedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateProfileId, entityType, entityId, fieldKey])
+  @@index([candidateAccountId, reviewStatus, updatedAt])
+  @@index([sourceResumeId])
+}
+
 model CandidateResumeParseJob {
   id String @id @default(uuid())
   candidateAccountId String
@@ -1624,10 +1704,14 @@ model CandidateResumeParseJob {
   candidateResume CandidateResume @relation(fields: [candidateResumeId, candidateAccountId], references: [id, candidateAccountId], onDelete: Cascade)
   status CandidateResumeParseJobStatus @default(QUEUED)
   attempts Int @default(0)
+  maxAttempts Int @default(3)
+  lastAttemptAt DateTime?
   availableAt DateTime @default(now())
   startedAt DateTime?
   completedAt DateTime?
-  errorCode String?
+  errorCode String? // Last non-sensitive error code.
+  safeErrorMessage String?
+  extractionMetadata Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([status, availableAt])
