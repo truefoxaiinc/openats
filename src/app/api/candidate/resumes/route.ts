@@ -1,5 +1,6 @@
 import { after, NextResponse } from 'next/server';
 import { processCandidateResumeJobs } from '@/server/candidate-resume-processing';
+import { resumeParserConfig } from '@/server/resume-parse/config';
 import { db } from '@/lib/db';
 import { requireCandidateAccount } from '@/server/candidate-auth/guards';
 import { sameOriginRequest } from '@/server/candidate-auth/validation';
@@ -20,7 +21,7 @@ export async function POST(request:Request) {
   const bytes=new Uint8Array(await file.arrayBuffer()); const checked=validateCandidateResume(bytes,file.type||'application/octet-stream');
   if(checked.format!=='pdf'&&checked.format!=='docx') return NextResponse.json({error:'Only PDF and DOCX resumes are supported.'},{status:415});
   const resume=await storeCandidateResume({candidateAccountId:account.id,filename:file.name,declaredMime:file.type||'application/octet-stream',data:bytes,isPrimary:true});
-  try { const job=await db.candidateResumeParseJob.create({data:{candidateAccountId:account.id,candidateResumeId:resume.id,status:'UPLOADED',availableAt:new Date()},select:{id:true,status:true}}); after(() => processCandidateResumeJobs(1).catch(() => console.error('[candidate-resume] background extraction failed'))); return NextResponse.json({resume,job},{status:201}); }
+  try { const job=await db.candidateResumeParseJob.create({data:{candidateAccountId:account.id,candidateResumeId:resume.id,status:'UPLOADED',availableAt:new Date()},select:{id:true,status:true}}); const parser=resumeParserConfig(); if(parser.state==='on') after(() => processCandidateResumeJobs(1).catch(() => console.error('[candidate-resume] background extraction failed'))); return NextResponse.json({resume,job,extractionConfigured:parser.state==='on',parserState:parser.state==='misconfigured'?parser.reason:parser.state},{status:201}); }
   catch(error) { await deleteCandidateResume(account.id,resume.id).catch(() => undefined); throw error; }
  } catch(error) {
   const message=error instanceof Error?error.message:'';
