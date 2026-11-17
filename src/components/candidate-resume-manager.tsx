@@ -1,5 +1,5 @@
 'use client';
-import { useRef,useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 type Resume={id:string;originalFilename:string;mimeType:string;sizeBytes:number;isPrimary:boolean;createdAt:string;parseJobs:{id:string;status:string;attempts:number;maxAttempts:number;safeErrorMessage:string|null}[]};
 async function responseData(response:Response) {
  const contentType=response.headers.get('content-type')??'';
@@ -13,6 +13,7 @@ function statusText(status?:string){if(status==='COMPLETED')return'Extraction co
 export function CandidateResumeManager({initialResumes}:{initialResumes:Resume[]}) {
  const [resumes,setResumes]=useState(initialResumes);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');const [error,setError]=useState('');const input=useRef<HTMLInputElement>(null);
  async function refresh(){const r=await fetch('/api/candidate/resumes',{cache:'no-store'});if(r.ok){const d=await responseData(r);setResumes(d.resumes);}}
+ useEffect(()=>{const pending=resumes.some(resume=>['UPLOADED','QUEUED','EXTRACTING','PARSING'].includes(resume.parseJobs[0]?.status??''));if(!pending)return;const timer=window.setInterval(()=>{void refresh().catch(e=>setError(e instanceof Error?e.message:'Unable to refresh resume status.'));},3000);return()=>window.clearInterval(timer);},[resumes]);
  async function upload(file?:File){if(!file)return;setError('');setMessage('');if(!/\.(pdf|docx)$/i.test(file.name)){setError('Only PDF and DOCX files are supported.');return;}if(file.size>10*1024*1024){setError('Maximum file size is 10 MB.');return;}setBusy(true);try{const body=new FormData();body.append('file',file);const r=await fetch('/api/candidate/resumes',{method:'POST',body,credentials:'same-origin'});const d=await responseData(r);if(!r.ok)throw new Error(d.error||'Upload failed.');setMessage('Resume uploaded. Extraction will run in the background.');await refresh();}catch(e){setError(e instanceof Error?e.message:'Upload failed.');}finally{setBusy(false);if(input.current)input.current.value='';}}
  async function remove(id:string){if(!window.confirm('Delete this resume? This cannot be undone.'))return;setBusy(true);setError('');try{const r=await fetch('/api/candidate/resumes/'+encodeURIComponent(id),{method:'DELETE'});const d=await responseData(r);if(!r.ok)throw new Error(d.error||'Delete failed.');setResumes(rows=>rows.filter(x=>x.id!==id));setMessage('Resume deleted.');}catch(e){setError(e instanceof Error?e.message:'Delete failed.');}finally{setBusy(false);}}
  async function retry(id:string){setBusy(true);setError('');try{const r=await fetch('/api/candidate/resumes/'+encodeURIComponent(id)+'/retry',{method:'POST'});const d=await responseData(r);if(!r.ok)throw new Error(d.error||'Retry failed.');setMessage('Extraction queued for retry.');await refresh();}catch(e){setError(e instanceof Error?e.message:'Retry failed.');}finally{setBusy(false);}}
