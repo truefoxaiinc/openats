@@ -93,6 +93,7 @@ export function CandidateAuthForm({ mode, token = '', errorMessage = '' }: { mod
             <label className="block text-sm text-ink-2">Phone number in international format (optional)
               <input type="tel" inputMode="tel" autoComplete="tel" placeholder="+919876543210" value={phoneE164} onChange={(e) => setPhoneE164(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink-3" />
             </label>
+            <p className="-mt-2 text-xs text-ink-3">If you add a phone number, enter both fields and make sure the country code matches. Otherwise, leave both blank.</p>
             <label className="flex items-start gap-2 text-sm text-ink-2">
               <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-1" />
               <span>I accept the Terms of Use.</span>

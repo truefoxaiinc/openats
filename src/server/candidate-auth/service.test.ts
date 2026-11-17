@@ -1,24 +1,55 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./email', () => ({ sendCandidateEmail: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('./session', () => ({ createCandidateSession: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/server/request-origin', () => ({
   requestOrigin: vi.fn().mockResolvedValue({ origin: 'https://openats.example' }),
 }));
 
 import { randomUUID } from 'node:crypto';
 import { db } from '@/lib/db';
-import { registerCandidate } from './service';
+import { loginCandidate, registerCandidate } from './service';
 
 const databaseAvailable = Boolean(process.env.TEST_DATABASE_URL);
 const createdEmails: string[] = [];
 
 afterEach(async () => {
+  vi.unstubAllEnvs();
   if (!databaseAvailable || createdEmails.length === 0) return;
   await db.candidateAccount.deleteMany({ where: { email: { in: createdEmails } } });
   createdEmails.length = 0;
 });
 
 describe('candidate registration consent validation', () => {
+  it('explains when optional phone details are incomplete', async () => {
+    const result = await registerCandidate({
+      name: 'Test Candidate',
+      email: 'phone-required@example.test',
+      password: 'correct horse battery staple',
+      phoneE164: '+919876543210',
+      termsAccepted: true,
+      privacyPolicyAccepted: true,
+    });
+    expect(result).toEqual({
+      ok: false,
+      error: 'Enter both phone fields with a matching country code and full international number, or leave both blank.',
+    });
+  });
+
+  it('explains the password byte limit', async () => {
+    const result = await registerCandidate({
+      name: 'Test Candidate',
+      email: 'password-limit@example.test',
+      password: 'é'.repeat(37),
+      termsAccepted: true,
+      privacyPolicyAccepted: true,
+    });
+    expect(result).toEqual({
+      ok: false,
+      error: 'Password must be 12-128 characters and no more than 72 UTF-8 bytes.',
+    });
+  });
+
   it('requires explicit Terms of Use acceptance', async () => {
     const result = await registerCandidate({
       name: 'Test Candidate', email: 'terms-required@example.test',
@@ -39,6 +70,27 @@ describe('candidate registration consent validation', () => {
 });
 
 describe.skipIf(!databaseAvailable)('candidate registration persistence', () => {
+  it('auto-verifies and allows password login without SMTP outside production', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('SMTP_URL', '');
+    const email = `candidate-${randomUUID()}@example.test`;
+    const password = 'correct horse battery staple';
+    createdEmails.push(email);
+
+    const result = await registerCandidate({
+      name: 'Test Candidate',
+      email,
+      password,
+      termsAccepted: true,
+      privacyPolicyAccepted: true,
+    });
+    expect(result).toEqual({ ok: true, autoVerified: true });
+
+    const account = await db.candidateAccount.findUniqueOrThrow({ where: { email } });
+    expect(account.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(await loginCandidate({ email, password })).toEqual({ ok: true });
+  });
+
   it('persists E.164 phone, country code and server-stamped policy versions', async () => {
     const email = `candidate-${randomUUID()}@example.test`;
     createdEmails.push(email);
