@@ -133,7 +133,7 @@ export default async function CandidateDashboardPage() {
             <div className="min-w-0">
               <p className="text-xs font-medium text-ink-3">Resume readiness</p>
               <p className="mt-1 truncate text-sm font-medium text-ink">{primaryResume?.originalFilename ?? 'Upload your resume to get started'}</p>
-              <p className="mt-1 text-xs text-ink-2">{primaryResume ? (primaryResume.parseJobs[0]?.safeErrorMessage ?? `Latest processing status: ${resumeStatus.toLowerCase().replaceAll('_', ' ')}`) : 'A stored resume is required to apply through your Candidate Portal.'}</p>
+              <p className="mt-1 text-xs text-ink-2">{primaryResume ? (primaryResume.parseJobs[0]?.safeErrorMessage ?? `Latest processing status: ${resumeStatus.toLowerCase().replace(/_/g, ' ')}`) : 'A stored resume is required to apply through your Candidate Portal.'}</p>
             </div>
             <Link href="/candidate/resumes" className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-line px-4 text-sm font-medium text-ink hover:bg-muted"><FileText size={15}/> Manage resumes</Link>
           </div>
@@ -166,7 +166,7 @@ export default async function CandidateDashboardPage() {
           )}
           <CandidateClaimButton />
         </section>
-        <p className="mt-8 text-xs leading-5 text-ink-3">Application details are shown only after you explicitly verify and connect the matching email address. Internal recruiter notes and confidential applications are not displayed.</p>
+        <p className="mt-8 text-xs leading-5 text-ink-3">Applications submitted from your Candidate Portal are linked to this account. Older public applications appear only after you explicitly verify and connect them. Internal recruiter notes and confidential applications are never displayed.</p>
       </div>
     </CandidateWorkspaceShell>
   );
