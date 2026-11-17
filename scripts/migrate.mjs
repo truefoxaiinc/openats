@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 // fileURLToPath, not URL.pathname: the latter keeps %20 for paths with spaces.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Local CLI only — a global Prisma 7 rejects this schema's datasource block.
-const prisma = path.join(root, 'node_modules', '.bin', 'prisma');
+const prisma = path.join(root, 'node_modules', 'prisma', 'build', 'index.js');
 const BASELINE = '0_init';
 const BASELINE_SCHEMA = path.join(root, 'scripts', 'lib', 'baseline.prisma');
 
@@ -44,7 +44,7 @@ function checkIndexes() {
 }
 
 function run(args, { capture = false } = {}) {
-  const res = spawnSync(prisma, args, {
+  const res = spawnSync(process.execPath, [prisma, ...args], {
     cwd: root,
     encoding: 'utf8',
     stdio: capture ? ['inherit', 'pipe', 'pipe'] : 'inherit',
@@ -66,7 +66,7 @@ if (process.env.VERCEL === '1' && process.env.VERCEL_ENV !== 'production') {
   process.exit(0);
 }
 if (!existsSync(prisma)) {
-  console.error('[migrate] node_modules/.bin/prisma not found — run npm ci first.');
+  console.error('[migrate] Local Prisma CLI not found — run npm ci first.');
   process.exit(1);
 }
 

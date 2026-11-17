@@ -16,6 +16,10 @@ async function actionUrl(path: string, token: string): Promise<string> {
 const CANDIDATE_TERMS_VERSION = 'candidate-terms-v1';
 const CANDIDATE_PRIVACY_VERSION = 'candidate-privacy-v1';
 
+function autoVerifyWithoutEmail(): boolean {
+  return process.env.NODE_ENV !== 'production' && !process.env.SMTP_URL;
+}
+
 export async function registerCandidate(input: {
   name: unknown;
   email: unknown;
@@ -30,15 +34,34 @@ export async function registerCandidate(input: {
   const phoneE164 = typeof input.phoneE164 === 'string' ? input.phoneE164.trim() : '';
   const phoneCountryCode = typeof input.phoneCountryCode === 'string' ? input.phoneCountryCode.trim() : '';
   const hasPhone = Boolean(phoneE164 || phoneCountryCode);
+  const autoVerify = autoVerifyWithoutEmail();
   const validPhone = !hasPhone || (/^\+[1-9]\d{7,14}$/.test(phoneE164)
     && /^\+[1-9]\d{0,3}$/.test(phoneCountryCode)
     && phoneE164.startsWith(phoneCountryCode));
-  if (name.length < 2 || !validCandidateEmail(email) || !validCandidatePassword(input.password)
-    || input.termsAccepted !== true || input.privacyPolicyAccepted !== true || !validPhone) {
-    return { ok: false as const, error: 'Enter valid account details and accept the Terms of Use and Privacy Policy.' };
+  if (name.length < 2) return { ok: false as const, error: 'Enter your full name.' };
+  if (!validCandidateEmail(email)) return { ok: false as const, error: 'Enter a valid email address.' };
+  if (!validCandidatePassword(input.password)) {
+    return { ok: false as const, error: 'Password must be 12-128 characters and no more than 72 UTF-8 bytes.' };
   }
-  const existing = await db.candidateAccount.findUnique({ where: { email }, select: { id: true } });
-  if (existing) return { ok: true as const };
+  if (input.termsAccepted !== true || input.privacyPolicyAccepted !== true) {
+    return { ok: false as const, error: 'Accept the Terms of Use and Privacy Policy to continue.' };
+  }
+  if (!validPhone) {
+    return { ok: false as const, error: 'Enter both phone fields with a matching country code and full international number, or leave both blank.' };
+  }
+  const existing = await db.candidateAccount.findUnique({
+    where: { email },
+    select: { id: true, emailVerifiedAt: true, passwordHash: true },
+  });
+  if (existing) {
+    if (autoVerify && existing.passwordHash && !existing.emailVerifiedAt) {
+      await db.candidateAccount.update({
+        where: { id: existing.id },
+        data: { emailVerifiedAt: new Date() },
+      });
+    }
+    return { ok: true as const, autoVerified: autoVerify && Boolean(existing.passwordHash) };
+  }
   const passwordHash = await bcrypt.hash(input.password, 12);
   let account;
   try {
@@ -54,11 +77,28 @@ export async function registerCandidate(input: {
         termsVersion: CANDIDATE_TERMS_VERSION,
         privacyPolicyAcceptedAt: acceptedAt,
         privacyPolicyVersion: CANDIDATE_PRIVACY_VERSION,
+        emailVerifiedAt: autoVerify ? acceptedAt : undefined,
       },
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return { ok: true as const };
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const raced = await db.candidateAccount.findUnique({
+        where: { email },
+        select: { id: true, emailVerifiedAt: true, passwordHash: true },
+      });
+      if (autoVerify && raced?.passwordHash && !raced.emailVerifiedAt) {
+        await db.candidateAccount.update({
+          where: { id: raced.id },
+          data: { emailVerifiedAt: new Date() },
+        });
+      }
+      return { ok: true as const, autoVerified: autoVerify && Boolean(raced?.passwordHash) };
+    }
     throw error;
+  }
+  if (autoVerify) {
+    console.info('[candidate-auth] email verification skipped outside production because SMTP_URL is unset.');
+    return { ok: true as const, autoVerified: true };
   }
   await db.candidateEmailVerificationToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
   const rawToken = createOpaqueToken();
@@ -74,7 +114,7 @@ export async function registerCandidate(input: {
     'Verify your OpenATS candidate account',
     `Hi ${name},\n\nVerify your email address to activate your OpenATS candidate account:\n\n${await actionUrl('/candidate/verify-email', rawToken)}\n\nThis link expires in 30 minutes. If you did not create this account, you can ignore this email.`,
   );
-  return { ok: true as const };
+  return { ok: true as const, autoVerified: false };
 }
 
 export async function loginCandidate(input: { email: unknown; password: unknown }) {
