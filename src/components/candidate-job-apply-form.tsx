@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type ResumeOption = { id: string; originalFilename: string; isPrimary: boolean };
@@ -23,7 +23,7 @@ export function CandidateJobApplyForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(alreadyApplied);
 
-  async function apply(event: React.FormEvent<HTMLFormElement>) {
+  async function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!resumeId || submitting || submitted) return;
     setSubmitting(true);
