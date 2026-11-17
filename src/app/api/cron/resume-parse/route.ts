@@ -1,6 +1,7 @@
 import { after, NextResponse } from 'next/server';
 import { cronAuthorized } from '@/server/cron';
 import { continueResumeParse, processResumeParse, runResumeParseSelfTest } from '@/server/resume-parse';
+import { processCandidateResumeJobs } from '@/server/candidate-resume-processing';
 
 // A run starts no file it can't finish before RESUME_PARSE_BUDGET_MS, and cuts off any call still going then.
 export const maxDuration = 300;
@@ -27,6 +28,9 @@ export async function GET(request: Request) {
     return NextResponse.json(result, { status });
   }
   const run = await processResumeParse();
+  let candidateResumes: { state: string; processed: number } | { state: 'error'; processed: 0 };
+  try { candidateResumes = await processCandidateResumeJobs(); }
+  catch { candidateResumes = { state: 'error', processed: 0 }; console.error('[candidate-resume-parse] cron batch failed'); }
   if (run.more) after(() => continueResumeParse().catch(() => undefined));
-  return NextResponse.json(run);
+  return NextResponse.json({ ...run, candidateResumes });
 }
