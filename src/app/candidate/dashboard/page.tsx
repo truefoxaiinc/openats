@@ -55,7 +55,7 @@ export default async function CandidateDashboardPage() {
 
   return (
     <CandidateWorkspaceShell>
-      <div className="w-full max-w-4xl">
+      <div className="w-full">
         <section className="rounded-card border border-line bg-surface p-6 sm:p-8">
           <p className="text-xs font-medium text-ink-3">Your account</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Hello, {account.name}</h1>

@@ -19,7 +19,7 @@ export default async function CandidateResumesPage() {
 
   return (
     <CandidateWorkspaceShell>
-      <div className="w-full max-w-4xl">
+      <div className="w-full">
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">My resumes</h1>
           <p className="mt-2 text-sm text-ink-2">Upload a PDF or DOCX. Your files are private and visible only to your candidate account.</p>
