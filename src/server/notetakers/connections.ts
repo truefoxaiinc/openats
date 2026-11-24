@@ -15,7 +15,7 @@ import {
 import { NotetakerOAuthProvider, redirectUriFor, sealSecrets } from '@/server/notetakers/oauth';
 import { clip } from '@/server/notetakers/parse';
 import { withMcpSession } from '@/server/notetakers/session';
-import { attachMeeting, describeFailure, isDemoOrg } from '@/server/notetakers/sync';
+import { attachMeeting, describeFailure } from '@/server/notetakers/sync';
 
 /**
  * Settings → Integrations → Meeting notetakers: what a person does with
@@ -73,10 +73,6 @@ function requireUser(ctx: SessionContext): string {
   return ctx.userId;
 }
 
-async function refuseDemo(orgId: string) {
-  if (await isDemoOrg(orgId)) throw new Error("Notetakers can't be connected in the demo workspace");
-}
-
 /**
  * Starts signing in to a notetaker: discovery, client registration (first
  * time per authorization server), PKCE. Returns the URL to send the browser
@@ -91,7 +87,6 @@ export async function startNotetakerOAuth(
   const userId = requireUser(ctx);
   const meta = notetakerProvider(providerId);
   if (!meta) throw new Error('Unknown notetaker');
-  await refuseDemo(ctx.orgId);
   const serverUrl = opts.serverUrl ?? meta.serverUrl;
   const existing = await db.transcriptConnection.findUnique({ where: { userId_provider: { userId, provider: meta.id } } });
   const conn = existing
@@ -236,7 +231,6 @@ export async function connectNotetakerWithApiKey(
   if (!meta?.apiKey) return { ok: false, error: 'This notetaker connects by signing in, not with a key' };
   const key = apiKey.trim();
   if (key.length < 8 || key.length > 2000 || /\s/.test(key)) return { ok: false, error: "That doesn't look like an API key" };
-  if (await isDemoOrg(ctx.orgId)) return { ok: false, error: "Notetakers can't be connected in the demo workspace" };
   const serverUrl = opts.serverUrl ?? meta.serverUrl;
   try {
     await withMcpSession(

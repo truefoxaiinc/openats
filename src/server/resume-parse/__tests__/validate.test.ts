@@ -113,9 +113,62 @@ describe('validating the model output', () => {
     );
     const { profile } = validateParsedResume(raw, TEXT);
     expect(profile).toMatchObject({ name: null, headline: null, location: null, emails: [], skills: ['Go'] });
-    expect(profile.experience).toEqual([{ title: 'Engineer', company: null, location: null, start: null, end: null }]);
+    expect(profile.experience).toEqual([{
+      title: 'Engineer',
+      company: null,
+      location: null,
+      start: null,
+      end: null,
+      description: null,
+      responsibilities: null,
+      achievements: null,
+    }]);
     expect(Object.keys(profile)).not.toContain('notes');
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it('keeps structured education, project, certification and language details for extraction', () => {
+    const text = [
+      'BSc Computer Science · North University · 2018 - 2022',
+      'Project: Hiring Portal · React, TypeScript · https://github.com/rowan/hiring-portal',
+      'AWS Certified Solutions Architect · Amazon Web Services · Credential AWS-123 · Issued Mar 2023',
+      'Languages: English (Fluent)',
+    ].join('\n');
+    const { profile } = validateParsedResume(full({
+      education: [{
+        school: 'North University',
+        degree: 'BSc',
+        field: 'Computer Science',
+        start: '2018',
+        end: '2022',
+        location: null,
+        description: null,
+        grade: null,
+      }],
+      projects: [{
+        name: 'Hiring Portal',
+        role: 'Developer',
+        description: 'Built an applicant portal.',
+        technologies: ['React', 'TypeScript'],
+        url: 'https://github.com/rowan/hiring-portal',
+        start: '2022',
+        end: '2023',
+      }],
+      certifications: [{
+        name: 'AWS Certified Solutions Architect',
+        issuer: 'Amazon Web Services',
+        credentialId: 'AWS-123',
+        credentialUrl: null,
+        issuedAt: 'Mar 2023',
+        expiresAt: null,
+      }],
+      languages: [{ name: 'English', proficiency: 'Fluent' }],
+    }), text);
+
+    expect(profile.education[0]).toMatchObject({ school: 'North University', degree: 'BSc', field: 'Computer Science' });
+    expect(profile.projects[0]).toMatchObject({ name: 'Hiring Portal', technologies: ['React', 'TypeScript'] });
+    expect(profile.certifications[0]).toMatchObject({ name: 'AWS Certified Solutions Architect', issuer: 'Amazon Web Services' });
+    expect(profile.languages).toEqual([{ name: 'English', proficiency: 'Fluent' }]);
   });
 
   it('strips control and hidden characters from strings', () => {

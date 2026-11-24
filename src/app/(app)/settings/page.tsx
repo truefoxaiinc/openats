@@ -20,7 +20,6 @@ import { PostingApprovalToggle } from '@/components/posting-approval-toggle';
 import { SettingsSwitch } from '@/components/settings-switch';
 import { NotetakerConnections } from '@/components/notetaker-connections';
 import { myNotetakerConnections, orgNotetakerOverview, suggestedMeetingCount } from '@/server/notetakers/connections';
-import { isDemoOrg } from '@/server/notetakers/sync';
 import {
   addScorecardQuestionAction,
   archiveScorecardQuestionAction,
@@ -84,7 +83,6 @@ export default async function SettingsPage({
       ? await Promise.all([
           myNotetakerConnections(ctx),
           isAdmin(ctx) ? orgNotetakerOverview(ctx) : Promise.resolve(null),
-          isDemoOrg(ctx.orgId),
           suggestedMeetingCount(ctx),
         ])
       : null;
@@ -439,8 +437,7 @@ export default async function SettingsPage({
           <NotetakerConnections
             connections={notetakers[0]}
             overview={notetakers[1]}
-            demo={notetakers[2]}
-            suggestedCount={notetakers[3]}
+            suggestedCount={notetakers[2]}
             notice={notetaker ? { result: notetaker, provider: notetakerProviderId ?? null } : null}
           />
         </Group>

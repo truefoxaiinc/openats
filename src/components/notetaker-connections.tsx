@@ -74,14 +74,12 @@ export function NotetakerConnections({
   connections,
   overview,
   notice,
-  demo,
   suggestedCount,
 }: {
   connections: NotetakerConnection[];
   /** Admins only: who in the org is connected. */
   overview: NotetakerOverviewRow[] | null;
   notice: NotetakerNotice;
-  demo: boolean;
   suggestedCount: number;
 }) {
   // Relative times render after mount, so server and client HTML agree.
@@ -103,13 +101,10 @@ export function NotetakerConnections({
             {shown.text}
           </p>
         ) : null}
-        {demo ? (
-          <p className="mt-3 text-sm text-ink-2">Notetakers can&apos;t be connected in the demo workspace.</p>
-        ) : null}
       </div>
 
       {NOTETAKER_PROVIDERS.map((p) => (
-        <ProviderRow key={p.id} meta={p} connection={connections.find((c) => c.provider === p.id)} now={now} demo={demo} />
+        <ProviderRow key={p.id} meta={p} connection={connections.find((c) => c.provider === p.id)} now={now} />
       ))}
 
       {suggestedCount ? (
@@ -167,12 +162,10 @@ function ProviderRow({
   meta,
   connection,
   now,
-  demo,
 }: {
   meta: NotetakerProvider;
   connection: NotetakerConnection | undefined;
   now: number | null;
-  demo: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -240,40 +233,38 @@ function ProviderRow({
             </p>
           </div>
         </div>
-        {demo ? null : (
-          <div className="flex shrink-0 items-center gap-2 pl-8 sm:pl-0">
-            {connected ? null : (
-              <>
-                {meta.apiKey && !keyOpen ? (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => {
-                      setError(null);
-                      setKeyOpen(true);
-                    }}
-                    className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                  >
-                    Use an API key
-                  </button>
-                ) : null}
-                <button type="button" disabled={pending} onClick={signIn} className={buttonClass({ variant: 'tonal', size: 'sm' })}>
-                  <BusyLabel busy={busy === 'connect'}>{status === 'NEEDS_RECONNECT' ? 'Reconnect' : 'Connect'}</BusyLabel>
+        <div className="flex shrink-0 items-center gap-2 pl-8 sm:pl-0">
+          {connected ? null : (
+            <>
+              {meta.apiKey && !keyOpen ? (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => {
+                    setError(null);
+                    setKeyOpen(true);
+                  }}
+                  className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                >
+                  Use an API key
                 </button>
-              </>
-            )}
-            {status === 'DISCONNECTED' || status === 'PENDING' ? null : (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={disconnect}
-                className={buttonClass({ variant: 'ghost', size: 'sm', className: 'hover:text-critical' })}
-              >
-                <BusyLabel busy={busy === 'disconnect'}>Disconnect</BusyLabel>
+              ) : null}
+              <button type="button" disabled={pending} onClick={signIn} className={buttonClass({ variant: 'tonal', size: 'sm' })}>
+                <BusyLabel busy={busy === 'connect'}>{status === 'NEEDS_RECONNECT' ? 'Reconnect' : 'Connect'}</BusyLabel>
               </button>
-            )}
-          </div>
-        )}
+            </>
+          )}
+          {status === 'DISCONNECTED' || status === 'PENDING' ? null : (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={disconnect}
+              className={buttonClass({ variant: 'ghost', size: 'sm', className: 'hover:text-critical' })}
+            >
+              <BusyLabel busy={busy === 'disconnect'}>Disconnect</BusyLabel>
+            </button>
+          )}
+        </div>
       </div>
 
       {keyOpen && meta.apiKey ? (

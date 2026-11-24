@@ -22,8 +22,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://openats:openats@db:5432/openats
-      DIRECT_URL: postgresql://openats:openats@db:5432/openats
+      DATABASE_URL: ${DATABASE_URL:-postgresql://openats:openats@db:5432/openats}
+      DIRECT_URL: ${DIRECT_URL:-${DATABASE_URL:-postgresql://openats:openats@db:5432/openats}}
       # Generate your own: openssl rand -base64 32
       AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production}
       # SMTP_URL: smtp://user:pass@smtp.example.com:587

@@ -24,11 +24,17 @@ When someone applies through your careers page with a resume, the model reads th
 
 Nothing anyone typed is overwritten. Parsing never moves a candidate, sends an email, adds a tag or creates a task.
 
+## Candidate portal uploads
+
+When a signed-in candidate uploads a resume and parsing is configured, the same parser also fills empty candidate-profile fields and adds extracted skills, experience, education, projects, certifications and languages. New AI-extracted entries are marked for review; existing profile details and account sign-in information are left unchanged. The candidate's **My resumes** page shows upload and extraction status and links to the profile for review.
+
+If parsing is not configured, the resume is still stored privately, but automatic profile extraction does not run.
+
 ## When it runs
 
-Parsing happens in the background, never while the applicant waits: the application is saved, the applicant sees their confirmation, and then the resume is sent to the model, usually within a second or two. A cron (below) picks up anything that couldn't be done right away, for example because the provider was down.
+Parsing happens in the background, never while the applicant waits: for careers-page applications the application is saved and the applicant sees their confirmation before the resume is sent to the model. Candidate portal uploads are also queued for profile extraction. A cron (below) picks up application resumes that couldn't be processed right away, for example because the provider was down.
 
-Only resumes from **new careers-page applications** are parsed. Imports from another ATS, CSV imports and resumes already in Source are never sent anywhere.
+Only resumes from **new careers-page applications** and candidate-initiated portal uploads are parsed. Imports from another ATS, CSV imports and resumes already in Source are never sent anywhere.
 
 ## Turn it on with Groq
 

@@ -5,7 +5,6 @@ import { candidate, createOrg } from './fixtures';
 import { startFakeMcp, type FakeMcp, type FakeOAuthOptions, type FakeTool } from './support/fake-mcp';
 import { db } from '@/lib/db';
 import type { SessionContext } from '@/lib/session';
-import { DEMO_EMAIL } from '@/server/demo';
 import {
   attachSuggestedMeeting,
   completeNotetakerOAuth,
@@ -321,7 +320,7 @@ describe.skipIf(!hasDb)('notetaker sync', () => {
     expect(await db.transcriptConnection.findUniqueOrThrow({ where: { id: conn.id } })).toMatchObject({ status: 'ACTIVE', lastError: null });
   });
 
-  it('leaves imported interviews and demo workspaces alone, and asks nothing of the provider without an interview', async () => {
+  it('leaves imported interviews alone and asks nothing of the provider without an interview', async () => {
     const { org, admin, interview } = await world();
     await db.importRef.create({ data: { orgId: org.id, provider: 'lever', kind: 'interview', externalId: 'lv-1', internalId: interview.id } });
     meetings = [{ id: 'ff-imported', title: 'Onsite', start: interview.startAt, emails: ['priya@example.com'] }];
@@ -332,25 +331,6 @@ describe.skipIf(!hasDb)('notetaker sync', () => {
     expect(mcp.calls.length).toBe(calls); // the provider wasn't called at all
     expect(await db.externalMeeting.count({ where: { orgId: org.id } })).toBe(0);
     expect((await db.transcriptConnection.findUniqueOrThrow({ where: { id: conn.id } })).lastSyncedAt).not.toBeNull();
-
-    const demo = await world();
-    await db.user.create({ data: { orgId: demo.org.id, email: DEMO_EMAIL, name: 'Demo Recruiter' } });
-    expect(await connectNotetakerWithApiKey(ctxOf(demo.admin), 'fireflies', KEY, { serverUrl: mcp.url })).toEqual({
-      ok: false,
-      error: "Notetakers can't be connected in the demo workspace",
-    });
-    const planted = await db.transcriptConnection.create({
-      data: {
-        orgId: demo.org.id,
-        userId: demo.admin.id,
-        provider: 'fireflies',
-        serverUrl: mcp.url,
-        authType: 'API_KEY',
-        credentials: sealSecrets({ kind: 'api_key', apiKey: KEY }),
-        status: 'ACTIVE',
-      },
-    });
-    expect((await syncTranscriptConnections({ connectionIds: [planted.id] })).connections).toBe(0);
   });
 
   it('marks an API-key connection NEEDS_RECONNECT when the key is refused, and a disconnect deletes the key', async () => {

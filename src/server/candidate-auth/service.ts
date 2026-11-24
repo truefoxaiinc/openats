@@ -16,8 +16,8 @@ async function actionUrl(path: string, token: string): Promise<string> {
 const CANDIDATE_TERMS_VERSION = 'candidate-terms-v1';
 const CANDIDATE_PRIVACY_VERSION = 'candidate-privacy-v1';
 
-function autoVerifyWithoutEmail(): boolean {
-  return process.env.NODE_ENV !== 'production' && !process.env.SMTP_URL;
+function autoVerifyInDevelopment(): boolean {
+  return process.env.NODE_ENV !== 'production';
 }
 
 export async function registerCandidate(input: {
@@ -34,7 +34,7 @@ export async function registerCandidate(input: {
   const phoneE164 = typeof input.phoneE164 === 'string' ? input.phoneE164.trim() : '';
   const phoneCountryCode = typeof input.phoneCountryCode === 'string' ? input.phoneCountryCode.trim() : '';
   const hasPhone = Boolean(phoneE164 || phoneCountryCode);
-  const autoVerify = autoVerifyWithoutEmail();
+  const autoVerify = autoVerifyInDevelopment();
   const validPhone = !hasPhone || (/^\+[1-9]\d{7,14}$/.test(phoneE164)
     && /^\+[1-9]\d{0,3}$/.test(phoneCountryCode)
     && phoneE164.startsWith(phoneCountryCode));
@@ -97,7 +97,7 @@ export async function registerCandidate(input: {
     throw error;
   }
   if (autoVerify) {
-    console.info('[candidate-auth] email verification skipped outside production because SMTP_URL is unset.');
+    console.info('[candidate-auth] email verification skipped outside production.');
     return { ok: true as const, autoVerified: true };
   }
   await db.candidateEmailVerificationToken.updateMany({ where: { candidateAccountId: account.id, consumedAt: null }, data: { consumedAt: new Date() } });
@@ -125,7 +125,15 @@ export async function loginCandidate(input: { email: unknown; password: unknown 
   if (!account?.passwordHash || !(await bcrypt.compare(password, account.passwordHash))) {
     return { ok: false as const, error: 'Invalid email or password.' };
   }
-  if (!account.emailVerifiedAt) return { ok: false as const, error: 'Verify your email address before signing in.' };
+  if (!account.emailVerifiedAt) {
+    if (process.env.NODE_ENV === 'production') {
+      return { ok: false as const, error: 'Verify your email address before signing in.' };
+    }
+    await db.candidateAccount.update({
+      where: { id: account.id },
+      data: { emailVerifiedAt: new Date() },
+    });
+  }
   await createCandidateSession(account.id);
   return { ok: true as const };
 }

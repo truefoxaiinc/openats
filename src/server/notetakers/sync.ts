@@ -3,7 +3,6 @@ import type { TranscriptConnection } from '@prisma/client';
 import { db } from '@/lib/db';
 import type { SessionContext } from '@/lib/session';
 import { notetakerProvider } from '@/lib/notetaker-providers';
-import { DEMO_EMAIL } from '@/server/demo';
 import { addTranscriptTx } from '@/server/transcripts';
 import { createAdapter, MissingToolsError, type NotetakerAdapter, type ToolCaller } from '@/server/notetakers/adapters';
 import { withConnectionLock, lockInTransaction } from '@/server/notetakers/locks';
@@ -36,7 +35,7 @@ import { withMcpSession, type McpSession } from '@/server/notetakers/session';
  *  - no AI runs here. The route hands attached transcripts to the insights
  *    step afterwards, the same as the transcripts API does.
  *
- * Interviews created by an ATS import, and demo workspaces, are left out.
+ * Interviews created by an ATS import are left out.
  */
 
 const MINUTE = 60_000;
@@ -88,11 +87,6 @@ function providerName(provider: string) {
 
 function startOfUtcDay(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
-
-/** Orgs made by the demo login: notetakers never run there (it's a shared sandbox). */
-export async function isDemoOrg(orgId: string): Promise<boolean> {
-  return Boolean(await db.user.findFirst({ where: { orgId, email: DEMO_EMAIL }, select: { id: true } }));
 }
 
 /**
@@ -484,14 +478,7 @@ async function dueConnections(now: Date, ids?: string[]) {
     orderBy: [{ lastSyncedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
     take: 500,
   });
-  const orgIds = [...new Set(rows.map((r) => r.orgId))];
-  const demo = new Set(
-    (
-      await db.user.findMany({ where: { orgId: { in: orgIds }, email: DEMO_EMAIL }, select: { orgId: true } })
-    ).map((u) => u.orgId),
-  );
   return rows.filter((r) => {
-    if (demo.has(r.orgId)) return false;
     const min = (notetakerProvider(r.provider)?.minSyncMinutes ?? 10) * MINUTE;
     // A minute of slack so a 10-minute schedule doesn't skip every other run.
     return !r.lastSyncedAt || now.getTime() - r.lastSyncedAt.getTime() >= min - MINUTE;

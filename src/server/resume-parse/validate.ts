@@ -22,6 +22,9 @@ export type ResumeExperience = {
   location: string | null;
   start: string | null;
   end: string | null;
+  description: string | null;
+  responsibilities: string | null;
+  achievements: string | null;
 };
 
 export type ResumeEducation = {
@@ -30,6 +33,33 @@ export type ResumeEducation = {
   field: string | null;
   start: string | null;
   end: string | null;
+  location: string | null;
+  description: string | null;
+  grade: string | null;
+};
+
+export type ResumeProject = {
+  name: string | null;
+  role: string | null;
+  description: string | null;
+  technologies: string[];
+  url: string | null;
+  start: string | null;
+  end: string | null;
+};
+
+export type ResumeCertification = {
+  name: string | null;
+  issuer: string | null;
+  credentialId: string | null;
+  credentialUrl: string | null;
+  issuedAt: string | null;
+  expiresAt: string | null;
+};
+
+export type ResumeLanguage = {
+  name: string | null;
+  proficiency: string | null;
 };
 
 export type ResumeProfile = {
@@ -43,6 +73,9 @@ export type ResumeProfile = {
   skills: string[];
   experience: ResumeExperience[];
   education: ResumeEducation[];
+  projects: ResumeProject[];
+  certifications: ResumeCertification[];
+  languages: ResumeLanguage[];
 };
 
 export const PROFILE_LIMITS = {
@@ -62,6 +95,21 @@ export const PROFILE_LIMITS = {
   school: 150,
   degree: 120,
   field: 120,
+  description: 1_200,
+  responsibilities: 1_200,
+  achievements: 1_200,
+  grade: 80,
+  project: 150,
+  projects: 20,
+  certification: 150,
+  certifications: 20,
+  credentialId: 150,
+  technology: 60,
+  technologies: 20,
+  language: 80,
+  languages: 20,
+  proficiency: 80,
+  date: 32,
 } as const;
 
 const CONTROL_OR_HIDDEN = /[\u0000-\u001F\u007F-\u009F\u00AD\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]|[\u{E0000}-\u{E007F}]/gu;
@@ -239,28 +287,96 @@ export function validLink(value: unknown, text: string): string | null {
   return text.includes(host) ? raw : null;
 }
 
-function experience(value: unknown): ResumeExperience | null {
+function experience(
+  value: unknown,
+  keep: (value: unknown, max: number) => string | null,
+): ResumeExperience | null {
   if (!isRecord(value)) return null;
   const e: ResumeExperience = {
-    title: cleanString(field(value, 'title'), PROFILE_LIMITS.title),
-    company: cleanString(field(value, 'company'), PROFILE_LIMITS.company),
-    location: cleanString(field(value, 'location'), PROFILE_LIMITS.location),
-    start: normalizeDate(field(value, 'start')),
-    end: normalizeDate(field(value, 'end'), { end: true }),
+    title: keep(field(value, 'title'), PROFILE_LIMITS.title),
+    company: keep(field(value, 'company'), PROFILE_LIMITS.company),
+    location: keep(field(value, 'location'), PROFILE_LIMITS.location),
+    start: keep(normalizeDate(field(value, 'start')), PROFILE_LIMITS.date),
+    end: keep(normalizeDate(field(value, 'end'), { end: true }), PROFILE_LIMITS.date),
+    description: keep(field(value, 'description'), PROFILE_LIMITS.description),
+    responsibilities: keep(field(value, 'responsibilities'), PROFILE_LIMITS.responsibilities),
+    achievements: keep(field(value, 'achievements'), PROFILE_LIMITS.achievements),
   };
   return e.title || e.company ? e : null;
 }
 
-function education(value: unknown): ResumeEducation | null {
+function education(
+  value: unknown,
+  keep: (value: unknown, max: number) => string | null,
+): ResumeEducation | null {
   if (!isRecord(value)) return null;
   const e: ResumeEducation = {
-    school: cleanString(field(value, 'school'), PROFILE_LIMITS.school),
-    degree: cleanString(field(value, 'degree'), PROFILE_LIMITS.degree),
-    field: cleanString(field(value, 'field'), PROFILE_LIMITS.field),
-    start: normalizeDate(field(value, 'start')),
-    end: normalizeDate(field(value, 'end'), { end: true }),
+    school: keep(field(value, 'school'), PROFILE_LIMITS.school),
+    degree: keep(field(value, 'degree'), PROFILE_LIMITS.degree),
+    field: keep(field(value, 'field'), PROFILE_LIMITS.field),
+    start: keep(normalizeDate(field(value, 'start')), PROFILE_LIMITS.date),
+    end: keep(normalizeDate(field(value, 'end'), { end: true }), PROFILE_LIMITS.date),
+    location: keep(field(value, 'location'), PROFILE_LIMITS.location),
+    description: keep(field(value, 'description'), PROFILE_LIMITS.description),
+    grade: keep(field(value, 'grade'), PROFILE_LIMITS.grade),
   };
   return e.school || e.degree || e.field ? e : null;
+}
+
+function project(
+  value: unknown,
+  keep: (value: unknown, max: number) => string | null,
+  sourceText: string,
+): ResumeProject | null {
+  if (!isRecord(value)) return null;
+  const technologies = uniqueBy(
+    list(field(value, 'technologies'))
+      .map((item) => (typeof item === 'string' && item.length <= PROFILE_LIMITS.technology
+        ? keep(item, PROFILE_LIMITS.technology)
+        : null))
+      .filter((item): item is string => !!item),
+    (item) => item.toLowerCase(),
+    PROFILE_LIMITS.technologies,
+  );
+  const item: ResumeProject = {
+    name: keep(field(value, 'name'), PROFILE_LIMITS.project),
+    role: keep(field(value, 'role'), PROFILE_LIMITS.title),
+    description: keep(field(value, 'description'), PROFILE_LIMITS.description),
+    technologies,
+    url: validLink(field(value, 'url'), sourceText),
+    start: keep(normalizeDate(field(value, 'start')), PROFILE_LIMITS.date),
+    end: keep(normalizeDate(field(value, 'end'), { end: true }), PROFILE_LIMITS.date),
+  };
+  return item.name ? item : null;
+}
+
+function certification(
+  value: unknown,
+  keep: (value: unknown, max: number) => string | null,
+  sourceText: string,
+): ResumeCertification | null {
+  if (!isRecord(value)) return null;
+  const item: ResumeCertification = {
+    name: keep(field(value, 'name'), PROFILE_LIMITS.certification),
+    issuer: keep(field(value, 'issuer'), PROFILE_LIMITS.company),
+    credentialId: keep(field(value, 'credentialId'), PROFILE_LIMITS.credentialId),
+    credentialUrl: validLink(field(value, 'credentialUrl'), sourceText),
+    issuedAt: keep(normalizeDate(field(value, 'issuedAt')), PROFILE_LIMITS.date),
+    expiresAt: keep(normalizeDate(field(value, 'expiresAt'), { end: true }), PROFILE_LIMITS.date),
+  };
+  return item.name ? item : null;
+}
+
+function language(
+  value: unknown,
+  keep: (value: unknown, max: number) => string | null,
+): ResumeLanguage | null {
+  if (!isRecord(value)) return null;
+  const item: ResumeLanguage = {
+    name: keep(field(value, 'name'), PROFILE_LIMITS.language),
+    proficiency: keep(field(value, 'proficiency'), PROFILE_LIMITS.proficiency),
+  };
+  return item.name ? item : null;
 }
 
 function uniqueBy<T>(items: T[], key: (item: T) => string, max: number): T[] {
@@ -287,6 +403,9 @@ export const EMPTY_PROFILE: ResumeProfile = {
   skills: [],
   experience: [],
   education: [],
+  projects: [],
+  certifications: [],
+  languages: [],
 };
 
 export function isEmptyProfile(p: ResumeProfile): boolean {
@@ -300,7 +419,10 @@ export function isEmptyProfile(p: ResumeProfile): boolean {
     !p.links.length &&
     !p.skills.length &&
     !p.experience.length &&
-    !p.education.length
+    !p.education.length &&
+    !p.projects.length &&
+    !p.certifications.length &&
+    !p.languages.length
   );
 }
 
@@ -320,6 +442,10 @@ export function validateParsedResume(raw: unknown, sourceText: string): { profil
   // Contact details are checked against the trusted text only.
   const text = comparable(split.trusted);
   const runs = digitRuns(split.trusted);
+  const keep = (value: unknown, max: number) => {
+    const cleaned = cleanString(value, max);
+    return onlyPlanted(cleaned, text, planted) ? null : cleaned;
+  };
 
   const emails = uniqueBy(
     list(field(raw, 'emails')).map((e) => validEmail(e, text)).filter((e): e is string => !!e),
@@ -337,30 +463,44 @@ export function validateParsedResume(raw: unknown, sourceText: string): { profil
   );
   const skills = uniqueBy(
     list(field(raw, 'skills'))
-      .map((s) => (typeof s === 'string' && s.trim().length <= PROFILE_LIMITS.skill ? cleanString(s, PROFILE_LIMITS.skill) : null))
+      .map((s) => (typeof s === 'string' && s.trim().length <= PROFILE_LIMITS.skill ? keep(s, PROFILE_LIMITS.skill) : null))
       .filter((s): s is string => !!s),
     (s) => s.toLowerCase(),
     PROFILE_LIMITS.skills,
   );
 
-  const kept = (value: string | null) => (onlyPlanted(value, text, planted) ? null : value);
   const profile: ResumeProfile = {
-    name: kept(cleanString(field(raw, 'name'), PROFILE_LIMITS.name)),
-    headline: kept(cleanString(field(raw, 'headline'), PROFILE_LIMITS.headline)),
-    location: kept(cleanString(field(raw, 'location'), PROFILE_LIMITS.location)),
-    summary: cleanString(field(raw, 'summary'), PROFILE_LIMITS.summary),
+    name: keep(field(raw, 'name'), PROFILE_LIMITS.name),
+    headline: keep(field(raw, 'headline'), PROFILE_LIMITS.headline),
+    location: keep(field(raw, 'location'), PROFILE_LIMITS.location),
+    summary: keep(field(raw, 'summary'), PROFILE_LIMITS.summary),
     emails,
     phones,
     links,
     skills,
     experience: list(field(raw, 'experience'))
-      .map(experience)
+      .map((item) => experience(item, keep))
       .filter((e): e is ResumeExperience => !!e)
       .slice(0, PROFILE_LIMITS.experience),
     education: list(field(raw, 'education'))
-      .map(education)
+      .map((item) => education(item, keep))
       .filter((e): e is ResumeEducation => !!e)
       .slice(0, PROFILE_LIMITS.education),
+    projects: list(field(raw, 'projects'))
+      .map((item) => project(item, keep, text))
+      .filter((item): item is ResumeProject => !!item)
+      .slice(0, PROFILE_LIMITS.projects),
+    certifications: list(field(raw, 'certifications'))
+      .map((item) => certification(item, keep, text))
+      .filter((item): item is ResumeCertification => !!item)
+      .slice(0, PROFILE_LIMITS.certifications),
+    languages: uniqueBy(
+      list(field(raw, 'languages'))
+        .map((item) => language(item, keep))
+        .filter((item): item is ResumeLanguage => !!item),
+      (item) => item.name!.toLowerCase(),
+      PROFILE_LIMITS.languages,
+    ),
   };
   return { profile, empty: isEmptyProfile(profile) };
 }

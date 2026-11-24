@@ -21,7 +21,7 @@ export const authConfig = {
       // CDN-cacheable.
       // The self-hosted edition's page is public marketing too. With
       // MARKETING_ORIGIN set, next.config.ts hands both to the marketing app.
-      // /demo signs a visitor in to the demo workspace (app/demo/route.ts).
+      // /demo is retained as a compatibility redirect to sign-in.
       if (nextUrl.pathname === '/self-hosted') return true;
       if (nextUrl.pathname === '/' || nextUrl.pathname === '/demo') {
         if (auth?.user?.orgId) return Response.redirect(new URL('/dashboard', nextUrl));

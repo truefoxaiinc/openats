@@ -125,7 +125,10 @@ export default async function CandidateDashboardPage() {
             <p className="text-xs font-medium text-ink-3">Profile completion</p>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-ink">{profileCompletion}%</p>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-ink" style={{ width: `${profileCompletion}%` }} /></div>
-            <Link href="/candidate/profile" className="mt-2 inline-flex text-xs font-medium text-ink underline underline-offset-4">Complete profile</Link>
+            <Link href="/candidate/profile" className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-line px-3 text-xs font-medium text-ink transition-colors hover:bg-muted">
+              <UserRound size={14} strokeWidth={1.75} />
+              View profile
+            </Link>
           </article>
         </section>
         <section className="mt-6 rounded-card border border-line bg-surface p-5">

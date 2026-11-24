@@ -1,18 +1,15 @@
 import Link from 'next/link';
-import { buttonClass } from '@/components/ui/button';
 import { AuthForm } from '@/components/auth-form';
 import { GoogleSignIn } from '@/components/google-auth';
 import { signInErrorMessage } from '@/lib/auth-errors';
 import { safeRedirectPath } from '@/lib/safe-redirect';
-import { demoEnabled } from '@/server/demo';
 import { googleAuthEnabled } from '@/server/google-auth';
 import { requestOrigin } from '@/server/request-origin';
-import { demoLogin, login } from '../actions';
+import { login } from '../actions';
 
 export const metadata = { title: 'Sign in · Source' };
 
-// Rendered per-request so the DEMO_MODE flag and the Google keys are read
-// at runtime, not baked in at build time.
+// Rendered per-request so Google keys are read at runtime, not baked in at build time.
 export const dynamic = 'force-dynamic';
 
 export default async function LoginPage({
@@ -47,22 +44,6 @@ export default async function LoginPage({
           { name: 'password', label: 'Password', type: 'password', autoComplete: 'current-password' },
         ]}
       />
-      {demoEnabled() ? (
-        <div className="mt-6">
-          <form action={demoLogin}>
-            <button
-              type="submit"
-              className={buttonClass({ variant: 'tonal', size: 'lg', className: 'w-full' })}
-            >
-              Explore the demo <span className="t-learn-arrow">→</span>
-            </button>
-          </form>
-          <p className="mt-2 text-xs text-ink-2">
-            One click into a sample workspace — seeded candidates, interviews, and an offer. No
-            account needed.
-          </p>
-        </div>
-      ) : null}
       <p className="mt-6 text-sm text-ink-2">
         New here?{' '}
         <Link href="/signup" className="font-medium text-ink hover:underline">

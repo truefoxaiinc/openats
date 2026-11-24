@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 const nav = [
   { href: '/candidate/dashboard', label: 'Dashboard', icon: Home },
   { href: '/candidate/jobs', label: 'Find jobs', icon: BriefcaseBusiness },
-  { href: '/candidate/profile', label: 'My profile', icon: UserRound },
   { href: '/candidate/resumes', label: 'My resumes', icon: FileText },
 ];
 
